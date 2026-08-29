@@ -2,7 +2,7 @@
 
 ## Links
 
-- **GitHub repository:** https://github.com/demo/takehome-01-project-task-tracker
+- **GitHub repository:** https://github.com/Gangasai232/task-pulse-tracker
 - **Live application:** https://task-pulse-tracker.vercel.app
 
 ## Notes for the reviewer
