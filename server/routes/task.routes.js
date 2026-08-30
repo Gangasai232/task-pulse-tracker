@@ -46,6 +46,14 @@ router.get('/', authMiddleware, async (req, res) => {
     const filter = { project: { $in: accessibleProjectIds } };
 
     if (projectId) {
+      if (req.user.role !== 'MANAGER') {
+        const isAccessible = accessibleProjectIds.some(
+          (pId) => pId.toString() === projectId.toString()
+        );
+        if (!isAccessible) {
+          return res.status(403).json({ error: 'Access denied. You are not a member of this project.' });
+        }
+      }
       filter.project = projectId;
     }
 
@@ -57,12 +65,12 @@ router.get('/', authMiddleware, async (req, res) => {
       filter.priority = priority;
     }
 
-    if (assigneeId) {
-      filter.assignees = assigneeId;
-    }
-
-    if (myTasksOnly === 'true') {
+    if (req.user.role !== 'MANAGER') {
+      // Non-manager members only see tasks assigned to themselves
       filter.assignees = req.user._id;
+    } else if (assigneeId) {
+      // Managers can filter by specific assignee
+      filter.assignees = assigneeId;
     }
 
     if (isOverdue === 'true') {
@@ -228,9 +236,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Task not found.' });
     }
 
-    const projectMemberIds = task.project.members.map((m) => m.toString());
-    if (req.user.role !== 'MANAGER' && !projectMemberIds.includes(req.user._id.toString())) {
-      return res.status(403).json({ error: 'Access denied. You are not a member of this project.' });
+    const isAssignee = task.assignees.some((id) => id.toString() === req.user._id.toString());
+    if (req.user.role !== 'MANAGER' && !isAssignee) {
+      return res.status(403).json({ error: 'Permission denied. Only assigned staff members or managers can update this task.' });
     }
 
     const logsToCreate = [];
