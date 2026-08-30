@@ -13,6 +13,7 @@ The server features an automatic in-memory MongoDB fallback when no external dat
 
 | Role | Email | Password |
 |------|-------|----------|
+| **Admin** | `admin@acme.com` | `password123` |
 | **Manager** | `manager@acme.com` | `password123` |
 | **Member** | `alice@acme.com` | `password123` |
 | **Member** | `bob@acme.com` | `password123` |
@@ -23,7 +24,7 @@ The server features an automatic in-memory MongoDB fallback when no external dat
 | Layer | What you used | Why |
 |-------|---------------|-----|
 | Frontend | React 18 + Vite, TailwindCSS, Recharts, Lucide Icons | High-performance SPA with modern glassmorphism aesthetics and responsive chart rendering. |
-| Backend | Node.js + Express.js,alice JWT, bcryptjs | Lightweight, fast REST API framework with modular middleware routing. |
+| Backend | Node.js + Express.js, JWT, bcryptjs | Lightweight, fast REST API framework with modular middleware routing. |
 | Database | MongoDB + Mongoose ORM (with MongoMemoryServer fallback) | Schema-validated document database for rich JSON task timelines and multi-assignee arrays. |
 | Hosting | Render (Server API) + Vercel (React Client) | Standard free-tier hosting for Node API and static React SPA. |
 

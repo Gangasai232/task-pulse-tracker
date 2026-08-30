@@ -9,6 +9,7 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { AllTasksPage } from './pages/AllTasksPage';
 import { MyTasksPage } from './pages/MyTasksPage';
+import { UsersPage } from './pages/UsersPage';
 import { OverdueAlertsModal } from './components/OverdueAlertsModal';
 import { ProjectModal } from './components/ProjectModal';
 import { TaskModal } from './components/TaskModal';
@@ -45,6 +46,7 @@ const ProtectedLayout = () => {
             <Route path="/projects/:id" element={<ProjectDetailPage />} />
             <Route path="/all-tasks" element={<AllTasksPage />} />
             <Route path="/my-tasks" element={<MyTasksPage />} />
+            <Route path="/users" element={<UsersPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

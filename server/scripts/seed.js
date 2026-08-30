@@ -18,6 +18,14 @@ async function seedDatabase() {
   // 1. Create Users
   const hashedPassword = await bcrypt.hash('password123', 10);
 
+  const admin = await User.create({
+    name: 'System Administrator (Admin)',
+    email: 'admin@acme.com',
+    password: hashedPassword,
+    role: 'ADMIN',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+  });
+
   const manager = await User.create({
     name: 'Sarah Jenkins (Manager)',
     email: 'manager@acme.com',

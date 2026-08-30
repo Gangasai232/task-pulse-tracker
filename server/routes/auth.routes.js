@@ -19,6 +19,7 @@ router.post('/login', async (req, res) => {
     // Auto-seed demo accounts on demand if database memory was reset
     if (!user) {
       const demoAccounts = {
+        'admin@acme.com': { name: 'System Administrator (Admin)', role: 'ADMIN' },
         'manager@acme.com': { name: 'Sarah Jenkins (Manager)', role: 'MANAGER' },
         'alice@acme.com': { name: 'Alice Cooper', role: 'MEMBER' },
         'bob@acme.com': { name: 'Bob Vance', role: 'MEMBER' },
@@ -32,7 +33,7 @@ router.post('/login', async (req, res) => {
           email: cleanEmail,
           password: hashedPassword,
           role: demoAccounts[cleanEmail].role,
-          avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
         });
       } else {
         return res.status(401).json({ error: 'Invalid email or password.' });

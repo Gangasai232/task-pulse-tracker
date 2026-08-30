@@ -1,16 +1,52 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 
 // GET /api/users - List all users
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const users = await User.find({}).select('-password').sort({ name: 1 });
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
     return res.json(users);
   } catch (err) {
     console.error('Fetch users error:', err);
     return res.status(500).json({ error: 'Failed to fetch users.' });
+  }
+});
+
+// POST /api/users - Register new user account (MANAGER / ADMIN only)
+router.post('/', authMiddleware, requireRole('MANAGER', 'ADMIN'), async (req, res) => {
+  try {
+    const { name, email, password, role, avatarUrl } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required.' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser) {
+      return res.status(400).json({ error: `Account with email '${cleanEmail}' already exists.` });
+    }
+
+    const allowedRole = ['ADMIN', 'MANAGER', 'MEMBER'].includes(role) ? role : 'MEMBER';
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({
+      name: name.trim(),
+      email: cleanEmail,
+      password: hashedPassword,
+      role: allowedRole,
+      avatarUrl: avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    });
+
+    return res.status(201).json(newUser);
+  } catch (err) {
+    console.error('Create user error:', err);
+    return res.status(500).json({ error: 'Failed to create user account.' });
   }
 });
 

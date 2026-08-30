@@ -30,6 +30,10 @@ const requireRole = (...allowedRoles) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required.' });
     }
+    // Admin has superuser privileges across manager roles
+    if (req.user.role === 'ADMIN') {
+      return next();
+    }
     if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
         error: `Permission denied. Access requires role: ${allowedRoles.join(' or ')}. Your role is ${req.user.role}.`,
