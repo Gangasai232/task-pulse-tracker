@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Shield, User, Lock, Sparkles } from 'lucide-react';
 
 export const LoginPage = () => {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,6 +21,7 @@ export const LoginPage = () => {
       setSubmitting(true);
       setError('');
       await login(email, password);
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -27,6 +34,7 @@ export const LoginPage = () => {
       setSubmitting(true);
       setError('');
       await login(demoEmail, 'password123');
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {
