@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 import {
   CheckCircle2,
   Clock,
@@ -8,6 +9,8 @@ import {
   TrendingUp,
   BarChart3,
   PieChart as PieChartIcon,
+  Shield,
+  User,
   Sparkles,
 } from 'lucide-react';
 import {
@@ -33,6 +36,7 @@ const STATUS_COLORS = {
 };
 
 export const DashboardPage = () => {
+  const { user, isManager } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -65,17 +69,33 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* Page Header */}
+      {/* Role-Customized Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            {isManager ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-indigo-950/80 text-indigo-400 border border-indigo-800/60 px-2 py-0.5 rounded-md font-mono">
+                <Shield className="w-3 h-3" /> MANAGER VIEW
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-slate-900 text-slate-300 border border-slate-800 px-2 py-0.5 rounded-md font-mono">
+                <User className="w-3 h-3 text-indigo-400" /> MEMBER VIEW
+              </span>
+            )}
+          </div>
+
           <h1 className="font-display text-2xl font-bold bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
-            Portfolio Dashboard
+            {isManager ? 'Portfolio Executive Dashboard' : `Welcome Back, ${user?.name?.split(' ')[0]}!`}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">High-level velocity and workload metrics across active projects</p>
+          <p className="text-xs text-slate-400 mt-1">
+            {isManager
+              ? 'Complete organization visibility across projects, team workloads, and velocity metrics'
+              : 'Workload overview and assigned project performance tracking'}
+          </p>
         </div>
 
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-950/40 border border-indigo-800/50 text-indigo-300 text-xs font-semibold">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Realtime Velocity Metrics
+          <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Realtime Velocity
         </div>
       </div>
 

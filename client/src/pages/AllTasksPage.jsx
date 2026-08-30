@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 import { StatusBadge } from '../components/StatusBadge';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { TaskModal } from '../components/TaskModal';
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export const AllTasksPage = () => {
+  const { user, isManager } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -63,7 +65,7 @@ export const AllTasksPage = () => {
         search,
         projectId,
         status,
-        assigneeId,
+        assigneeId: isManager ? assigneeId : (user?._id || ''),
         priority,
         isOverdue: isOverdue ? 'true' : 'false',
         sortBy,
