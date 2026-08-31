@@ -1,24 +1,29 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, CheckSquare, Search, PlusCircle, Users } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, CheckSquare, Search, PlusCircle, Users, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const Sidebar = ({ onOpenCreateProject }) => {
   const { isManager, user } = useAuth();
-  const isAdminOrManager = isManager || user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN';
+  const canCreateProject = isManager || isAdmin;
 
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/projects', label: 'Projects', icon: FolderKanban },
     { to: '/all-tasks', label: 'All Tasks & Search', icon: Search },
     { to: '/my-tasks', label: 'My Assigned Tasks', icon: CheckSquare },
-    { to: '/users', label: 'User Accounts', icon: Users },
+    { to: '/users', label: 'User Directory', icon: Users },
   ];
+
+  if (isAdmin) {
+    navItems.push({ to: '/admin', label: 'Admin Console', icon: ShieldCheck, highlight: true });
+  }
 
   return (
     <aside className="w-64 glass-panel border-r border-slate-800/80 min-h-[calc(100vh-65px)] p-4 flex flex-col justify-between">
       <div className="space-y-6">
-        {isAdminOrManager && (
+        {canCreateProject && (
           <button
             onClick={onOpenCreateProject}
             className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25 transition-all duration-200 active:scale-[0.98]"
@@ -42,7 +47,11 @@ export const Sidebar = ({ onOpenCreateProject }) => {
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-sm'
+                      ? item.highlight
+                        ? 'bg-rose-950/80 text-rose-300 border border-rose-800 shadow-sm'
+                        : 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-sm'
+                      : item.highlight
+                      ? 'text-rose-400 hover:bg-rose-950/30 border border-rose-900/40'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent'
                   }`
                 }
@@ -58,7 +67,7 @@ export const Sidebar = ({ onOpenCreateProject }) => {
       <div className="pt-4 border-t border-slate-800/80 text-xs text-slate-500 px-3">
         <div className="flex items-center justify-between">
           <span>System Version</span>
-          <span className="font-mono text-slate-400">v1.1.0</span>
+          <span className="font-mono text-slate-400">v1.2.0</span>
         </div>
       </div>
     </aside>
