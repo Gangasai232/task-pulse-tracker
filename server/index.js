@@ -30,7 +30,16 @@ connectDB().then(async () => {
   const { seedDatabaseIfEmpty } = require('./scripts/seed');
   await seedDatabaseIfEmpty();
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`\n⚠️  Port ${PORT} is already in use by another running server instance.`);
+      console.log(`The server is already running and ready to accept requests on http://localhost:${PORT}\n`);
+    } else {
+      console.error('Server error:', err);
+    }
   });
 });
