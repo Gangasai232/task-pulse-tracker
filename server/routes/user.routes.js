@@ -15,8 +15,8 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/users - Register new user account (MANAGER / ADMIN only)
-router.post('/', authMiddleware, requireRole('MANAGER', 'ADMIN'), async (req, res) => {
+// POST /api/users - Register new user account (ADMIN ONLY)
+router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   try {
     const { name, email, password, role, avatarUrl } = req.body;
 

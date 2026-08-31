@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { UserPlus, Shield, User, ShieldCheck, Mail, Calendar, Key, AlertCircle } from 'lucide-react';
 
 export const UsersPage = () => {
-  const { user, isManager } = useAuth();
+  const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -17,7 +17,8 @@ export const UsersPage = () => {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
 
-  const canRegister = isManager || user?.role === 'ADMIN';
+  // Strictly restrict account registration to ADMIN role only
+  const canRegister = user?.role === 'ADMIN';
 
   const loadUsers = async () => {
     try {
@@ -77,16 +78,16 @@ export const UsersPage = () => {
             User Accounts Directory
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Registered organization managers, staff members, and administrators
+            Registered organization managers, staff members, and system administrators
           </p>
         </div>
 
         {canRegister && (
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-600/25 active:scale-95 transition"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-rose-600/20 active:scale-95 transition"
           >
-            <UserPlus className="w-4 h-4" /> Register New Account
+            <UserPlus className="w-4 h-4" /> Register New Account (Admin Only)
           </button>
         )}
       </div>
@@ -145,13 +146,13 @@ export const UsersPage = () => {
         ))}
       </div>
 
-      {/* Register Account Modal */}
+      {/* Register Account Modal (Admin Only) */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-800 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-display font-bold text-lg text-slate-100 flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-indigo-400" /> Register User Account
+                <UserPlus className="w-5 h-5 text-rose-400" /> Admin: Register User Account
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -206,14 +207,14 @@ export const UsersPage = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Account Role</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Assign Account Role</label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none"
                 >
                   <option value="MEMBER">Member (Regular Staff)</option>
-                  <option value="MANAGER">Manager (Project & Team Lead)</option>
+                  <option value="MANAGER">Manager (Project Lead)</option>
                   <option value="ADMIN">Admin (System Administrator)</option>
                 </select>
               </div>
@@ -229,7 +230,7 @@ export const UsersPage = () => {
                 <button
                   type="submit"
                   disabled={creating}
-                  className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20"
+                  className="px-5 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20"
                 >
                   {creating ? 'Registering...' : 'Register Account'}
                 </button>
