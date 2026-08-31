@@ -138,7 +138,7 @@ export const UsersPage = () => {
 
             <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 font-mono">
               <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-slate-500" /> Joined {new Date(u.createdAt).toLocaleDateString()}
+                <Calendar className="w-3 h-3 text-slate-500" /> Registered {new Date(u.createdAt).toLocaleDateString()} at {new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
               <span className="text-emerald-400 font-semibold">Active</span>
             </div>

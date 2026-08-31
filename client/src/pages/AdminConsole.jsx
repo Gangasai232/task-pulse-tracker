@@ -281,6 +281,9 @@ export const AdminConsole = () => {
                   <div>
                     <div className="text-sm font-semibold text-slate-100">{u.name}</div>
                     <div className="text-xs text-slate-400 font-mono">{u.email}</div>
+                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                      Registered {new Date(u.createdAt).toLocaleDateString()} at {new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
                 </div>
 

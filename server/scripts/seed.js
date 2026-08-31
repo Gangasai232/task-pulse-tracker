@@ -15,8 +15,10 @@ async function seedDatabase() {
   await ActivityLog.deleteMany({});
   await AlertDismissal.deleteMany({});
 
-  // 1. Create Users
+  // 1. Create Users with realistic distinct registration timestamps
   const hashedPassword = await bcrypt.hash('password123', 10);
+  const nowMs = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
 
   const admin = await User.create({
     name: 'System Administrator (Admin)',
@@ -24,6 +26,7 @@ async function seedDatabase() {
     password: hashedPassword,
     role: 'ADMIN',
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    createdAt: new Date(nowMs - 90 * DAY),
   });
 
   const manager = await User.create({
@@ -32,6 +35,7 @@ async function seedDatabase() {
     password: hashedPassword,
     role: 'MANAGER',
     avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    createdAt: new Date(nowMs - 60 * DAY),
   });
 
   const alice = await User.create({
@@ -40,6 +44,7 @@ async function seedDatabase() {
     password: hashedPassword,
     role: 'MEMBER',
     avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
+    createdAt: new Date(nowMs - 30 * DAY),
   });
 
   const bob = await User.create({
@@ -48,6 +53,7 @@ async function seedDatabase() {
     password: hashedPassword,
     role: 'MEMBER',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    createdAt: new Date(nowMs - 15 * DAY),
   });
 
   const charlie = await User.create({
@@ -56,6 +62,7 @@ async function seedDatabase() {
     password: hashedPassword,
     role: 'MEMBER',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+    createdAt: new Date(nowMs - 5 * DAY),
   });
 
   console.log('Users created: Manager & 3 Members.');
