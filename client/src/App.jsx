@@ -24,7 +24,7 @@ const ProtectedLayout = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -32,6 +32,8 @@ const ProtectedLayout = () => {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+
+  const isAdmin = user.role === 'ADMIN';
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
@@ -42,7 +44,7 @@ const ProtectedLayout = () => {
 
         <main className="flex-1 p-8 overflow-y-auto">
           <Routes>
-            <Route path="/" element={<DashboardPage />} />
+            <Route path="/" element={isAdmin ? <AdminConsole /> : <DashboardPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:id" element={<ProjectDetailPage />} />
             <Route path="/all-tasks" element={<AllTasksPage />} />

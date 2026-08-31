@@ -10,9 +10,9 @@ import {
   Mail,
   Calendar,
   AlertCircle,
-  Sparkles,
   Search,
   CheckCircle2,
+  Sparkles,
 } from 'lucide-react';
 
 export const AdminConsole = () => {
@@ -55,7 +55,7 @@ export const AdminConsole = () => {
       setSuccessMsg('');
       await api.post('/users', { name, email, password, role });
 
-      setSuccessMsg(`Successfully registered account '${email}' with role '${role}'.`);
+      setSuccessMsg(`Successfully registered account '${email}' as '${role}'.`);
       setName('');
       setEmail('');
       setPassword('');
@@ -91,75 +91,75 @@ export const AdminConsole = () => {
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* Admin Header Banner */}
-      <div className="glass-panel p-6 rounded-3xl border border-rose-800/60 bg-gradient-to-r from-rose-950/40 via-slate-900 to-indigo-950/40 shadow-2xl relative overflow-hidden">
+      {/* Header Banner */}
+      <div className="glass-panel p-6 rounded-3xl border border-indigo-500/30 bg-gradient-to-r from-slate-950 via-indigo-950/60 to-purple-950/40 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <ShieldCheck className="w-48 h-48 text-rose-400" />
+          <ShieldCheck className="w-48 h-48 text-indigo-400" />
         </div>
 
         <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-950/90 text-rose-300 text-xs font-bold font-mono border border-rose-800 shadow-md">
-            <ShieldCheck className="w-3.5 h-3.5 text-rose-400" /> SYSTEM ADMIN CONSOLE
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-950/90 text-indigo-300 text-xs font-bold font-mono border border-indigo-800/80 shadow-md">
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" /> SYSTEM ADMIN PORTAL
           </div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
+          <h1 className="font-display text-2xl md:text-3xl font-bold bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
             User Account Registration & Governance
           </h1>
           <p className="text-xs text-slate-300 max-w-xl">
-            Provision new user accounts, assign role permissions (Admin, Manager, Member), and govern organization access.
+            Dedicated Administrator workspace for registering accounts, assigning system roles, and managing member access.
           </p>
         </div>
       </div>
 
       {/* Role Counts KPI Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+        <div className="glass-panel p-5 rounded-2xl border border-slate-800 flex items-center justify-between shadow-lg hover:border-slate-700 transition">
           <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Accounts</div>
-            <div className="text-2xl font-bold font-display text-slate-100 mt-0.5">{totalCount}</div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Registered Accounts</div>
+            <div className="text-3xl font-extrabold font-display text-slate-100 mt-1">{totalCount}</div>
           </div>
-          <div className="p-3 rounded-xl bg-slate-900 text-slate-300 border border-slate-800">
-            <Users className="w-5 h-5" />
+          <div className="p-3.5 rounded-2xl bg-slate-900 text-slate-300 border border-slate-800">
+            <Users className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+        <div className="glass-panel p-5 rounded-2xl border border-purple-900/50 flex items-center justify-between shadow-lg hover:border-purple-500/40 transition">
           <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Administrators</div>
-            <div className="text-2xl font-bold font-display text-rose-400 mt-0.5">{adminCount}</div>
+            <div className="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">Administrators</div>
+            <div className="text-3xl font-extrabold font-display text-purple-300 mt-1">{adminCount}</div>
           </div>
-          <div className="p-3 rounded-xl bg-rose-950/60 text-rose-400 border border-rose-800/60">
-            <ShieldCheck className="w-5 h-5" />
+          <div className="p-3.5 rounded-2xl bg-purple-950/60 text-purple-400 border border-purple-800/60">
+            <ShieldCheck className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+        <div className="glass-panel p-5 rounded-2xl border border-indigo-900/50 flex items-center justify-between shadow-lg hover:border-indigo-500/40 transition">
           <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Managers</div>
-            <div className="text-2xl font-bold font-display text-indigo-400 mt-0.5">{managerCount}</div>
+            <div className="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">Project Managers</div>
+            <div className="text-3xl font-extrabold font-display text-indigo-300 mt-1">{managerCount}</div>
           </div>
-          <div className="p-3 rounded-xl bg-indigo-950/60 text-indigo-400 border border-indigo-800/60">
-            <Shield className="w-5 h-5" />
+          <div className="p-3.5 rounded-2xl bg-indigo-950/60 text-indigo-400 border border-indigo-800/60">
+            <Shield className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+        <div className="glass-panel p-5 rounded-2xl border border-emerald-900/50 flex items-center justify-between shadow-lg hover:border-emerald-500/40 transition">
           <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Staff Members</div>
-            <div className="text-2xl font-bold font-display text-emerald-400 mt-0.5">{memberCount}</div>
+            <div className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Staff Members</div>
+            <div className="text-3xl font-extrabold font-display text-emerald-300 mt-1">{memberCount}</div>
           </div>
-          <div className="p-3 rounded-xl bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
-            <User className="w-5 h-5" />
+          <div className="p-3.5 rounded-2xl bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
+            <User className="w-6 h-6" />
           </div>
         </div>
       </div>
 
-      {/* Main Grid: Left Registration Form, Right Account List */}
+      {/* Main Grid: Left Account Registration Form, Right Accounts List */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Account Registration Portal */}
+        {/* Left Column: Account Provisioning Form */}
         <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
           <div className="flex items-center gap-2 font-display font-bold text-slate-100 text-base">
-            <UserPlus className="w-5 h-5 text-rose-400" />
-            <span>Register New Account</span>
+            <UserPlus className="w-5 h-5 text-indigo-400" />
+            <span>Account Registration</span>
           </div>
 
           {error && (
@@ -184,7 +184,7 @@ export const AdminConsole = () => {
                 placeholder="e.g. David Miller"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-rose-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                 required
               />
             </div>
@@ -196,7 +196,7 @@ export const AdminConsole = () => {
                 placeholder="e.g. david@acme.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-rose-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                 required
               />
             </div>
@@ -208,13 +208,13 @@ export const AdminConsole = () => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-rose-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Account Role</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Assign Account Role</label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
@@ -229,9 +229,9 @@ export const AdminConsole = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-rose-600/20 transition"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/20 transition active:scale-95 disabled:opacity-50"
             >
-              {submitting ? 'Registering...' : 'Provision New Account'}
+              {submitting ? 'Registering Account...' : 'Register Account'}
             </button>
           </form>
         </div>
@@ -239,14 +239,14 @@ export const AdminConsole = () => {
         {/* Right Column: Registered Accounts List */}
         <div className="lg:col-span-2 glass-panel p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="font-display font-bold text-slate-100 text-base">User Directory & Status</h3>
+            <h3 className="font-display font-bold text-slate-100 text-base">Registered Account Directory</h3>
 
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
                 <input
                   type="text"
-                  placeholder="Filter users..."
+                  placeholder="Search accounts..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none"
@@ -270,7 +270,7 @@ export const AdminConsole = () => {
             {filteredUsers.map((u) => (
               <div
                 key={u._id}
-                className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3 shadow-md"
+                className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3 shadow-md hover:border-slate-700 transition"
               >
                 <div className="flex items-center gap-3">
                   <img
@@ -291,10 +291,10 @@ export const AdminConsole = () => {
                   <span
                     className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                       u.role === 'ADMIN'
-                        ? 'bg-rose-950/80 text-rose-300 border-rose-800'
+                        ? 'bg-purple-950/80 text-purple-300 border-purple-800'
                         : u.role === 'MANAGER'
                         ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800'
-                        : 'bg-slate-900 text-slate-300 border-slate-800'
+                        : 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
                     }`}
                   >
                     {u.role}
