@@ -36,6 +36,7 @@ const server = app.listen(PORT, async () => {
     await connectDB();
     const { seedDatabaseIfEmpty } = require('./scripts/seed');
     await seedDatabaseIfEmpty();
+    console.log(`✅ Server is online and ready for connections!`);
     console.log(`==================================================\n`);
   } catch (dbErr) {
     console.error('Database connection error:', dbErr.message);
