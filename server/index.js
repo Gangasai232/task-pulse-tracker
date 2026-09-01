@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
-
 const path = require('path');
+
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
@@ -32,15 +32,22 @@ connectDB().then(async () => {
   await seedDatabaseIfEmpty();
 
   const server = app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+    console.log(`\n==================================================`);
+    console.log(`🚀 TaskPulse Express Server listening on port ${PORT}`);
+    console.log(`API URL: http://localhost:${PORT}/api`);
+    console.log(`==================================================\n`);
   });
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.log(`\n⚠️  Port ${PORT} is already in use by another running server instance.`);
-      console.log(`The server is already running and ready to accept requests on http://localhost:${PORT}\n`);
+      console.log(`\n==================================================`);
+      console.log(`✅ TaskPulse Express Server is ALREADY RUNNING on port ${PORT}.`);
+      console.log(`Your backend server is active and ready on http://localhost:${PORT}`);
+      console.log(`==================================================\n`);
+      process.exit(0);
     } else {
       console.error('Server error:', err);
+      process.exit(1);
     }
   });
 });
