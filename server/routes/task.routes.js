@@ -237,9 +237,16 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 
     const isAssignee = task.assignees.some((id) => id.toString() === req.user._id.toString());
-    if (req.user.role !== 'MANAGER' && !isAssignee) {
-      return res.status(403).json({ error: 'Permission denied. Only assigned staff members or managers can update this task.' });
+    const isManagerOrAdmin = req.user.role === 'MANAGER' || req.user.role === 'ADMIN';
+
+    if (!isManagerOrAdmin && !isAssignee) {
+      return res.status(403).json({ error: 'Permission denied. Only assigned staff members, managers, or admins can update this task.' });
     }
+
+    // Safely extract project member IDs
+    const projectMemberIds = task.project && task.project.members
+      ? task.project.members.map((m) => m.toString())
+      : [];
 
     const logsToCreate = [];
 
@@ -279,7 +286,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     // Assignee updates
     if (assignees !== undefined && Array.isArray(assignees)) {
-      const validAssignees = assignees.filter((aId) => projectMemberIds.includes(aId.toString()));
+      let validAssignees = assignees;
+      if (projectMemberIds.length > 0) {
+        validAssignees = assignees.filter((aId) => projectMemberIds.includes(aId.toString()));
+      }
+
       const oldAssigneesStr = task.assignees.map((id) => id.toString()).sort().join(',');
       const newAssigneesStr = validAssignees.map((id) => id.toString()).sort().join(',');
 
@@ -360,7 +371,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     return res.json(taskObj);
   } catch (err) {
     console.error('Update task error:', err);
-    return res.status(500).json({ error: 'Failed to update task.' });
+    return res.status(500).json({ error: 'Failed to update task: ' + err.message });
   }
 });
 

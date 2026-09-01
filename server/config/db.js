@@ -9,24 +9,28 @@ try {
 }
 
 const connectDB = async () => {
-  try {
-    let mongoUri = process.env.MONGODB_URI;
+  let mongoUri = process.env.MONGODB_URI;
 
-    if (!mongoUri) {
-      console.log('No MONGODB_URI provided. Initializing in-memory MongoDB server...');
-      const { MongoMemoryServer } = require('mongodb-memory-server');
-      const mongoServer = await MongoMemoryServer.create();
-      mongoUri = mongoServer.getUri();
-      console.log(`In-memory MongoDB started at: ${mongoUri}`);
+  if (mongoUri) {
+    try {
+      const conn = await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });
+      console.log(`MongoDB Connected: ${conn.connection.host}`);
+      return conn;
+    } catch (atlasErr) {
+      console.warn(`\n⚠️ Primary MONGODB_URI connection failed (${atlasErr.message}).`);
+      console.warn(`Falling back to in-memory database server...\n`);
     }
-
-    const conn = await mongoose.connect(mongoUri);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (error) {
-    console.error(`MongoDB Connection Error: ${error.message}`);
-    process.exit(1);
   }
+
+  console.log('Initializing in-memory MongoDB server fallback...');
+  const { MongoMemoryServer } = require('mongodb-memory-server');
+  const mongoServer = await MongoMemoryServer.create();
+  mongoUri = mongoServer.getUri();
+  console.log(`In-memory MongoDB started at: ${mongoUri}`);
+
+  const conn = await mongoose.connect(mongoUri);
+  console.log(`MongoDB Connected: ${conn.connection.host}`);
+  return conn;
 };
 
 module.exports = connectDB;
