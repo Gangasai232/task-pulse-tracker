@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Bell, LogOut, Shield, Sparkles } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
+import { Bell, LogOut, Shield } from 'lucide-react';
 
 export const Navbar = ({ onOpenAlertsModal }) => {
   const { user, alertCount, logout, isManager } = useAuth();
@@ -28,14 +29,17 @@ export const Navbar = ({ onOpenAlertsModal }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        {/* Day / Night Mode Theme Switcher */}
+        <ThemeToggle />
+
         {/* Overdue Alerts Badge */}
         <button
           onClick={onOpenAlertsModal}
-          className="relative p-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-indigo-500/40 transition-all duration-200 group shadow-md"
+          className="relative p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-indigo-500/40 transition-all duration-200 group shadow-md"
           title="Overdue Alerts"
         >
-          <Bell className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200 text-slate-300 group-hover:text-indigo-400" />
+          <Bell className="w-4.5 h-4.5 group-hover:rotate-12 transition-transform duration-200 text-slate-300 group-hover:text-indigo-400" />
           {alertCount > 0 && (
             <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-bold h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-lg shadow-rose-500/30 animate-bounce">
               {alertCount}
@@ -71,7 +75,7 @@ export const Navbar = ({ onOpenAlertsModal }) => {
 
           <button
             onClick={logout}
-            className="p-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 border border-transparent hover:border-rose-900/50 transition-all duration-200"
+            className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 border border-transparent hover:border-rose-900/50 transition-all duration-200"
             title="Sign Out"
           >
             <LogOut className="w-4.5 h-4.5" />
