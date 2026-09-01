@@ -13,7 +13,16 @@ const authMiddleware = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const user = await User.findById(decoded.id);
+    let user = null;
+    if (decoded.id) {
+      user = await User.findById(decoded.id);
+    }
+
+    // Resilient fallback: if server/database restarted and generated fresh user ObjectIds, match by email
+    if (!user && decoded.email) {
+      user = await User.findOne({ email: decoded.email.toLowerCase().trim() });
+    }
+
     if (!user) {
       return res.status(401).json({ error: 'User account not found or token is invalid. Please sign in again.' });
     }

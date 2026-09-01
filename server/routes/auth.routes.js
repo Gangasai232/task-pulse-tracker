@@ -46,21 +46,35 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
     return res.json({
-      user,
       token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+      },
     });
   } catch (err) {
     console.error('Login error:', err);
-    return res.status(500).json({ error: 'Server error during authentication.' });
+    return res.status(500).json({ error: 'Authentication failed.' });
   }
 });
 
-// GET /api/auth/me
+// GET /api/auth/me - Verify current token session
 router.get('/me', authMiddleware, async (req, res) => {
-  return res.json({ user: req.user });
+  return res.json({
+    user: {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+      avatarUrl: req.user.avatarUrl,
+    },
+  });
 });
 
 module.exports = router;
