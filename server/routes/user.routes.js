@@ -50,4 +50,41 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   }
 });
 
+// DELETE /api/users/:id - Delete user account (ADMIN ONLY)
+router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+
+    if (targetUserId === req.user._id.toString()) {
+      return res.status(400).json({ error: 'You cannot delete your own active admin account.' });
+    }
+
+    const userToDelete = await User.findById(targetUserId);
+    if (!userToDelete) {
+      return res.status(404).json({ error: 'User account not found.' });
+    }
+
+    await User.findByIdAndDelete(targetUserId);
+
+    // Clean up memberships and task assignments for deleted user
+    const Task = require('../models/Task');
+    const Project = require('../models/Project');
+
+    await Task.updateMany(
+      { assignees: targetUserId },
+      { $pull: { assignees: targetUserId } }
+    );
+
+    await Project.updateMany(
+      { members: targetUserId },
+      { $pull: { members: targetUserId } }
+    );
+
+    return res.json({ message: `Account '${userToDelete.email}' deleted successfully.`, userId: targetUserId });
+  } catch (err) {
+    console.error('Delete user error:', err);
+    return res.status(500).json({ error: 'Failed to delete user account.' });
+  }
+});
+
 module.exports = router;

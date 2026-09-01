@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, Shield, User, ShieldCheck, Mail, Calendar, Key, AlertCircle } from 'lucide-react';
+import { UserPlus, Shield, User, ShieldCheck, Mail, Calendar, AlertCircle, Trash2 } from 'lucide-react';
 
 export const UsersPage = () => {
   const { user } = useAuth();
@@ -17,7 +17,7 @@ export const UsersPage = () => {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
 
-  // Strictly restrict account registration to ADMIN role only
+  // Strictly restrict account registration and deletion to ADMIN role only
   const canRegister = user?.role === 'ADMIN';
 
   const loadUsers = async () => {
@@ -61,6 +61,18 @@ export const UsersPage = () => {
     }
   };
 
+  const handleDeleteUser = async (targetId, targetName) => {
+    if (!window.confirm(`Are you sure you want to delete user account "${targetName}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await api.delete(`/users/${targetId}`);
+      await loadUsers();
+    } catch (err) {
+      alert(`Failed to delete user account: ${err.message}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -85,7 +97,7 @@ export const UsersPage = () => {
         {canRegister && (
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-rose-600/20 active:scale-95 transition"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-600/20 active:scale-95 transition"
           >
             <UserPlus className="w-4 h-4" /> Register New Account (Admin Only)
           </button>
@@ -115,25 +127,37 @@ export const UsersPage = () => {
                 </div>
               </div>
 
-              {/* Role Badge */}
-              <span
-                className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border ${
-                  u.role === 'ADMIN'
-                    ? 'bg-rose-950/80 text-rose-300 border-rose-800'
-                    : u.role === 'MANAGER'
-                    ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800'
-                    : 'bg-slate-900 text-slate-300 border-slate-800'
-                }`}
-              >
-                {u.role === 'ADMIN' ? (
-                  <ShieldCheck className="w-3 h-3 text-rose-400" />
-                ) : u.role === 'MANAGER' ? (
-                  <Shield className="w-3 h-3 text-indigo-400" />
-                ) : (
-                  <User className="w-3 h-3 text-slate-400" />
+              <div className="flex items-center gap-2">
+                {/* Role Badge */}
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border ${
+                    u.role === 'ADMIN'
+                      ? 'bg-rose-950/80 text-rose-300 border-rose-800'
+                      : u.role === 'MANAGER'
+                      ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800'
+                      : 'bg-slate-900 text-slate-300 border-slate-800'
+                  }`}
+                >
+                  {u.role === 'ADMIN' ? (
+                    <ShieldCheck className="w-3 h-3 text-rose-400" />
+                  ) : u.role === 'MANAGER' ? (
+                    <Shield className="w-3 h-3 text-indigo-400" />
+                  ) : (
+                    <User className="w-3 h-3 text-slate-400" />
+                  )}
+                  {u.role}
+                </span>
+
+                {canRegister && user?._id !== u._id && (
+                  <button
+                    onClick={() => handleDeleteUser(u._id, u.name)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition"
+                    title={`Delete user account ${u.name}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 )}
-                {u.role}
-              </span>
+              </div>
             </div>
 
             <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 font-mono">
@@ -152,7 +176,7 @@ export const UsersPage = () => {
           <div className="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-800 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-display font-bold text-lg text-slate-100 flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-rose-400" /> Admin: Register User Account
+                <UserPlus className="w-5 h-5 text-indigo-400" /> Admin: Register User Account
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -230,7 +254,7 @@ export const UsersPage = () => {
                 <button
                   type="submit"
                   disabled={creating}
-                  className="px-5 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20"
+                  className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20"
                 >
                   {creating ? 'Registering...' : 'Register Account'}
                 </button>

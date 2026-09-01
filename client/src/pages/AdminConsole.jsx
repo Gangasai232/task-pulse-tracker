@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Search,
   CheckCircle2,
-  Sparkles,
+  Trash2,
 } from 'lucide-react';
 
 export const AdminConsole = () => {
@@ -68,6 +68,21 @@ export const AdminConsole = () => {
     }
   };
 
+  const handleDeleteUser = async (targetId, targetName) => {
+    if (!window.confirm(`Are you sure you want to delete user account "${targetName}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      setError('');
+      setSuccessMsg('');
+      const res = await api.delete(`/users/${targetId}`);
+      setSuccessMsg(res.message || `Deleted account "${targetName}".`);
+      await loadUsers();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -105,7 +120,7 @@ export const AdminConsole = () => {
             User Account Registration & Governance
           </h1>
           <p className="text-xs text-slate-300 max-w-xl">
-            Dedicated Administrator workspace for registering accounts, assigning system roles, and managing member access.
+            Dedicated Administrator workspace for registering accounts, assigning system roles, and deleting members.
           </p>
         </div>
       </div>
@@ -299,6 +314,16 @@ export const AdminConsole = () => {
                   >
                     {u.role}
                   </span>
+
+                  {user?._id !== u._id && (
+                    <button
+                      onClick={() => handleDeleteUser(u._id, u.name)}
+                      className="p-2 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-900/50 transition"
+                      title={`Delete account ${u.name}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
