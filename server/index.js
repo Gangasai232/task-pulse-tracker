@@ -25,29 +25,32 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start Server
-connectDB().then(async () => {
-  // Auto seed database if empty
-  const { seedDatabaseIfEmpty } = require('./scripts/seed');
-  await seedDatabaseIfEmpty();
+// Start Server: bind port FIRST before DB connection to instantly check if port is already active
+const server = app.listen(PORT, async () => {
+  console.log(`\n==================================================`);
+  console.log(`🚀 TaskPulse Express Server listening on port ${PORT}`);
+  console.log(`API URL: http://localhost:${PORT}/api`);
 
-  const server = app.listen(PORT, () => {
-    console.log(`\n==================================================`);
-    console.log(`🚀 TaskPulse Express Server listening on port ${PORT}`);
-    console.log(`API URL: http://localhost:${PORT}/api`);
+  // Connect to Database after port binding succeeds
+  try {
+    await connectDB();
+    const { seedDatabaseIfEmpty } = require('./scripts/seed');
+    await seedDatabaseIfEmpty();
     console.log(`==================================================\n`);
-  });
+  } catch (dbErr) {
+    console.error('Database connection error:', dbErr.message);
+  }
+});
 
-  server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.log(`\n==================================================`);
-      console.log(`✅ TaskPulse Express Server is ALREADY RUNNING on port ${PORT}.`);
-      console.log(`Your backend server is active and ready on http://localhost:${PORT}`);
-      console.log(`==================================================\n`);
-      process.exit(0);
-    } else {
-      console.error('Server error:', err);
-      process.exit(1);
-    }
-  });
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`\n==================================================`);
+    console.log(`✅ TaskPulse Express Server is ALREADY RUNNING on port ${PORT}.`);
+    console.log(`Your backend server is active and ready on http://localhost:${PORT}`);
+    console.log(`==================================================\n`);
+    process.exit(0);
+  } else {
+    console.error('Server error:', err);
+    process.exit(1);
+  }
 });
