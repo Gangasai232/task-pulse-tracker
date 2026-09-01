@@ -133,6 +133,16 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Project and task title are required.' });
     }
 
+    // Validate due date is not in the past
+    if (dueDate) {
+      const selectedDate = new Date(dueDate);
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      if (selectedDate < startOfToday) {
+        return res.status(400).json({ error: 'Due date cannot be set to a past date. Please choose today or a future date.' });
+      }
+    }
+
     const project = await Project.findById(projectId);
     if (!project) {
       return res.status(404).json({ error: 'Project not found.' });
@@ -337,6 +347,15 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 
     if (dueDate !== undefined) {
+      if (dueDate) {
+        const selectedDate = new Date(dueDate);
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        if (selectedDate < startOfToday) {
+          return res.status(400).json({ error: 'Due date cannot be set to a past date. Please choose today or a future date.' });
+        }
+      }
+
       const newDate = dueDate ? new Date(dueDate).toISOString() : null;
       const oldDate = task.dueDate ? new Date(task.dueDate).toISOString() : null;
       if (newDate !== oldDate) {
@@ -508,6 +527,16 @@ router.post('/bulk', authMiddleware, async (req, res) => {
           results.push({ taskId: id, success: true });
         } else if (action === 'UPDATE_DUE_DATE') {
           const { dueDate } = payload;
+          if (dueDate) {
+            const selectedDate = new Date(dueDate);
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+            if (selectedDate < startOfToday) {
+              results.push({ taskId: id, success: false, error: 'Due date cannot be in the past.' });
+              continue;
+            }
+          }
+
           const newDate = dueDate ? new Date(dueDate) : null;
           task.dueDate = newDate;
           await task.save();

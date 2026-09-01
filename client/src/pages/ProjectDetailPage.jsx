@@ -344,6 +344,7 @@ export const ProjectDetailPage = () => {
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Due Date</label>
                   <input
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     value={newDueDate}
                     onChange={(e) => setNewDueDate(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none"
