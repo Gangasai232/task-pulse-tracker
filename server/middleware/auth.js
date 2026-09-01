@@ -7,7 +7,7 @@ const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authentication required. No token provided.' });
+      return res.status(401).json({ error: 'Authentication required. No session token provided.' });
     }
 
     const token = authHeader.split(' ')[1];
@@ -15,13 +15,13 @@ const authMiddleware = async (req, res, next) => {
 
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(401).json({ error: 'User not found or token invalid.' });
+      return res.status(401).json({ error: 'User account not found or token is invalid. Please sign in again.' });
     }
 
     req.user = user;
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired authentication token.' });
+    return res.status(401).json({ error: 'Your session has expired or the token is invalid. Please sign in again.' });
   }
 };
 

@@ -23,10 +23,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response error handler
+// Response error handler: Handle HTTP 401 invalid/expired tokens gracefully
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login?expired=true';
+      }
+    }
     const message = error.response?.data?.error || error.message || 'An unexpected error occurred.';
     return Promise.reject(new Error(message));
   }

@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { User, Lock, AlertCircle, ArrowRight, ShieldAlert } from 'lucide-react';
 
 export const LoginPage = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [expiredMsg, setExpiredMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('expired') === 'true') {
+      setExpiredMsg('Your session has expired or the token is invalid. Please sign in again to continue.');
+    }
+  }, [location]);
 
   if (user) {
     return <Navigate to="/" replace />;
@@ -20,6 +29,7 @@ export const LoginPage = () => {
     try {
       setSubmitting(true);
       setError('');
+      setExpiredMsg('');
       await login(email, password);
       navigate('/');
     } catch (err) {
@@ -43,6 +53,13 @@ export const LoginPage = () => {
 
         {/* Login Form */}
         <div className="glass-panel p-8 rounded-2xl border border-slate-800 space-y-6 shadow-2xl">
+          {expiredMsg && (
+            <div className="p-3.5 rounded-xl bg-amber-950/90 border border-amber-800 text-amber-300 text-xs flex items-start gap-2">
+              <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <span>{expiredMsg}</span>
+            </div>
+          )}
+
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-950/90 border border-rose-800 text-rose-300 text-xs flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
