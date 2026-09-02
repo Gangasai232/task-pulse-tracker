@@ -16,28 +16,8 @@ router.post('/login', async (req, res) => {
     const cleanEmail = email.toLowerCase().trim();
     let user = await User.findOne({ email: cleanEmail });
 
-    // Auto-seed demo accounts on demand if database memory was reset
     if (!user) {
-      const demoAccounts = {
-        'admin@acme.com': { name: 'System Administrator (Admin)', role: 'ADMIN' },
-        'manager@acme.com': { name: 'Sarah Jenkins (Manager)', role: 'MANAGER' },
-        'alice@acme.com': { name: 'Alice Cooper', role: 'MEMBER' },
-        'bob@acme.com': { name: 'Bob Vance', role: 'MEMBER' },
-        'charlie@acme.com': { name: 'Charlie Day', role: 'MEMBER' },
-      };
-
-      if (demoAccounts[cleanEmail]) {
-        const hashedPassword = await bcrypt.hash('password123', 10);
-        user = await User.create({
-          name: demoAccounts[cleanEmail].name,
-          email: cleanEmail,
-          password: hashedPassword,
-          role: demoAccounts[cleanEmail].role,
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        });
-      } else {
-        return res.status(401).json({ error: 'Invalid email or password.' });
-      }
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
     // Verify password match strictly with bcrypt
@@ -75,6 +55,39 @@ router.get('/me', authMiddleware, async (req, res) => {
       avatarUrl: req.user.avatarUrl,
     },
   });
+});
+
+// PUT /api/auth/change-password - Change current user password
+router.put('/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User account not found.' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Current password is incorrect.' });
+    }
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = newHashedPassword;
+    await user.save();
+
+    return res.json({ message: 'Password updated successfully.' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    return res.status(500).json({ error: 'Failed to update password.' });
+  }
 });
 
 module.exports = router;

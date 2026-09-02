@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
-import { Bell, LogOut, Shield } from 'lucide-react';
+import { ChangePasswordModal } from './ChangePasswordModal';
+import { Bell, LogOut, KeyRound } from 'lucide-react';
 
 export const Navbar = ({ onOpenAlertsModal }) => {
-  const { user, alertCount, logout, isManager } = useAuth();
+  const { user, alertCount, logout } = useAuth();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 bg-[#0f172a]/95 backdrop-blur-md border-b border-slate-800 px-6 py-3 flex items-center justify-between shadow-sm">
@@ -45,7 +47,7 @@ export const Navbar = ({ onOpenAlertsModal }) => {
           )}
         </button>
 
-        {/* User Profile */}
+        {/* User Profile & Actions */}
         <div className="flex items-center gap-3 pl-3 border-l border-slate-800">
           <div className="relative">
             <img
@@ -64,6 +66,16 @@ export const Navbar = ({ onOpenAlertsModal }) => {
             </div>
           </div>
 
+          {/* Change Password Button */}
+          <button
+            onClick={() => setShowPasswordModal(true)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-indigo-950/40 border border-transparent hover:border-indigo-900/50 transition"
+            title="Change Account Password"
+          >
+            <KeyRound className="w-4 h-4" />
+          </button>
+
+          {/* Sign Out Button */}
           <button
             onClick={logout}
             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-900/50 transition"
@@ -73,6 +85,11 @@ export const Navbar = ({ onOpenAlertsModal }) => {
           </button>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+      )}
     </header>
   );
 };
