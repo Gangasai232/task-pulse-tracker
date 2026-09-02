@@ -82,6 +82,7 @@ const ProtectedLayout = () => {
     return <Navigate to="/login" replace />;
   }
 
+  const isAdmin = user?.role === 'ADMIN';
   const isManagerOrAdmin = user?.role === 'MANAGER' || user?.role === 'ADMIN';
 
   return (
