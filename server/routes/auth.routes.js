@@ -72,10 +72,9 @@ router.put('/change-password', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
     }
 
-    // Ensure password field is populated even if excluded by default query options
-    const user = await User.findById(req.user._id).select('+password');
+    const user = await User.findById(req.user._id);
     if (!user || !user.password) {
-      return res.status(404).json({ error: 'User account or password record not found. Please sign in again.' });
+      return res.status(404).json({ error: 'User account not found. Please sign in again.' });
     }
 
     const isMatch = await bcrypt.compare(cleanCurrent, user.password);
@@ -86,17 +85,15 @@ router.put('/change-password', authMiddleware, async (req, res) => {
     // Hash new password strictly with bcrypt
     const newHashedPassword = await bcrypt.hash(cleanNew, 10);
 
-    // Save on document instance and perform atomic findByIdAndUpdate for 100% fail-safe persistence
-    user.password = newHashedPassword;
-    await user.save();
-    await User.findByIdAndUpdate(user._id, { $set: { password: newHashedPassword } }, { new: true });
+    // Atomic update in database
+    await User.findByIdAndUpdate(user._id, { $set: { password: newHashedPassword } });
 
     console.log(`[AUTH] Password updated successfully for user ${user.email}`);
 
     return res.json({ message: 'Password updated successfully.' });
   } catch (err) {
     console.error('Change password error:', err);
-    return res.status(500).json({ error: 'Failed to update password: ' + err.message });
+    return res.status(500).json({ error: 'Failed to update password.' });
   }
 });
 
