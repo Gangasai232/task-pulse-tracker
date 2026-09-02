@@ -15,12 +15,16 @@ export const ChangePasswordModal = ({ onClose }) => {
     setError('');
     setSuccessMsg('');
 
-    if (newPassword !== confirmPassword) {
+    const cleanCurrent = currentPassword.trim();
+    const cleanNew = newPassword.trim();
+    const cleanConfirm = confirmPassword.trim();
+
+    if (cleanNew !== cleanConfirm) {
       setError('New password and confirmation password do not match.');
       return;
     }
 
-    if (newPassword.length < 6) {
+    if (cleanNew.length < 6) {
       setError('New password must be at least 6 characters long.');
       return;
     }
@@ -28,8 +32,8 @@ export const ChangePasswordModal = ({ onClose }) => {
     try {
       setSubmitting(true);
       const res = await api.put('/auth/change-password', {
-        currentPassword,
-        newPassword,
+        currentPassword: cleanCurrent,
+        newPassword: cleanNew,
       });
 
       setSuccessMsg(res.message || 'Password updated successfully!');
@@ -48,8 +52,8 @@ export const ChangePasswordModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="glass-panel w-full max-w-md rounded-2xl border border-slate-800 p-6 space-y-5 shadow-2xl relative animate-fadeIn">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div className="glass-panel w-full max-w-md rounded-2xl border border-slate-800 p-6 space-y-5 shadow-2xl relative my-auto animate-fadeIn">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <KeyRound className="w-5 h-5 text-indigo-400" />

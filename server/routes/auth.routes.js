@@ -65,7 +65,10 @@ router.put('/change-password', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Current password and new password are required.' });
     }
 
-    if (newPassword.length < 6) {
+    const cleanCurrent = currentPassword.toString().trim();
+    const cleanNew = newPassword.toString().trim();
+
+    if (cleanNew.length < 6) {
       return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
     }
 
@@ -75,13 +78,13 @@ router.put('/change-password', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User account or password record not found. Please sign in again.' });
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await bcrypt.compare(cleanCurrent, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: 'Current password is incorrect.' });
     }
 
     // Hash new password strictly with bcrypt
-    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    const newHashedPassword = await bcrypt.hash(cleanNew, 10);
 
     // Save on document instance and perform atomic findByIdAndUpdate for 100% fail-safe persistence
     user.password = newHashedPassword;
@@ -93,7 +96,7 @@ router.put('/change-password', authMiddleware, async (req, res) => {
     return res.json({ message: 'Password updated successfully.' });
   } catch (err) {
     console.error('Change password error:', err);
-    return res.status(500).json({ error: 'Failed to update password.' });
+    return res.status(500).json({ error: 'Failed to update password: ' + err.message });
   }
 });
 
