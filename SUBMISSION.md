@@ -9,15 +9,13 @@
 
 The server features an automatic in-memory MongoDB fallback when no external database URI is configured, allowing immediate full-stack execution out of the box (`npm start` or `npm run dev`). On first boot, the server automatically seeds realistic demo data including projects, tasks, blocking dependencies, overdue tasks, and historical 8-week completions.
 
-## Demo credentials
+## Deployment credentials
 
 | Role | Email | Password |
 |------|-------|----------|
-| **Admin** | `admin@acme.com` | `password123` |
-| **Manager** | `manager@acme.com` | `password123` |
-| **Member** | `alice@acme.com` | `password123` |
-| **Member** | `bob@acme.com` | `password123` |
-| **Member** | `charlie@acme.com` | `password123` |
+| **System Admin** | `admin@acme.com` | `password123` |
+
+*Note: Demo manager/member accounts, projects, and tasks have been cleaned for production deployment. The System Administrator provisions clean Manager and Member accounts directly from the System Admin Portal (`/admin`).*
 
 ## Stack
 
