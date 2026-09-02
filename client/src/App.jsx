@@ -82,7 +82,7 @@ const ProtectedLayout = () => {
     return <Navigate to="/login" replace />;
   }
 
-  const isAdmin = user?.role === 'ADMIN';
+  const isManagerOrAdmin = user?.role === 'MANAGER' || user?.role === 'ADMIN';
 
   return (
     <div className="min-h-screen bg-[#0b0f19] flex flex-col">
@@ -98,7 +98,7 @@ const ProtectedLayout = () => {
             <Route path="/projects/:id" element={<ProjectDetailPage />} />
             <Route path="/all-tasks" element={<AllTasksPage />} />
             <Route path="/my-tasks" element={<MyTasksPage />} />
-            <Route path="/users" element={<UsersPage />} />
+            <Route path="/users" element={isManagerOrAdmin ? <UsersPage /> : <Navigate to="/" replace />} />
             <Route path="/admin" element={<AdminConsole />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

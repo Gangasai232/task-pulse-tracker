@@ -4,8 +4,8 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 
-// GET /api/users - List all users
-router.get('/', authMiddleware, async (req, res) => {
+// GET /api/users - List all users (MANAGER and ADMIN only)
+router.get('/', authMiddleware, requireRole('MANAGER'), async (req, res) => {
   try {
     const users = await User.find({}).select('-password').sort({ createdAt: -1 });
     return res.json(users);

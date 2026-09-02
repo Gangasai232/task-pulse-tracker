@@ -18,7 +18,7 @@ export const Sidebar = ({ onOpenCreateProject }) => {
         { to: '/projects', label: 'Projects', icon: FolderKanban },
         { to: '/all-tasks', label: 'All Tasks & Search', icon: Search },
         { to: '/my-tasks', label: 'My Assigned Tasks', icon: CheckSquare },
-        { to: '/users', label: 'User Directory', icon: Users },
+        ...(isManager ? [{ to: '/users', label: 'User Directory', icon: Users }] : []),
       ];
 
   return (
