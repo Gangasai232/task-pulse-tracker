@@ -69,9 +69,10 @@ router.put('/change-password', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
     }
 
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ error: 'User account not found.' });
+    // Ensure password field is populated even if excluded by default query options
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user || !user.password) {
+      return res.status(404).json({ error: 'User account or password record not found. Please sign in again.' });
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -79,9 +80,13 @@ router.put('/change-password', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Current password is incorrect.' });
     }
 
+    // Hash new password strictly with bcrypt
     const newHashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = newHashedPassword;
-    await user.save();
+
+    // Atomic database update using findByIdAndUpdate
+    await User.findByIdAndUpdate(user._id, { $set: { password: newHashedPassword } }, { new: true });
+
+    console.log(`[AUTH] Password updated successfully for user ${user.email}`);
 
     return res.json({ message: 'Password updated successfully.' });
   } catch (err) {

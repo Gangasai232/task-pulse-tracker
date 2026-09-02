@@ -10,12 +10,16 @@ const { STATUSES } = require('../utils/stateMachine');
 router.get('/stats', authMiddleware, async (req, res) => {
   try {
     let accessibleProjectIds = [];
-    if (req.user.role !== 'MANAGER') {
-      const userProjects = await Project.find({ members: req.user._id, archived: false }).select('_id');
-      accessibleProjectIds = userProjects.map((p) => p._id);
-    } else {
+    if (req.user.role === 'ADMIN') {
       const activeProjects = await Project.find({ archived: false }).select('_id');
       accessibleProjectIds = activeProjects.map((p) => p._id);
+    } else {
+      // MANAGER & MEMBER: Only calculate metrics for projects where user is owner or member
+      const userProjects = await Project.find({
+        archived: false,
+        $or: [{ owner: req.user._id }, { members: req.user._id }],
+      }).select('_id');
+      accessibleProjectIds = userProjects.map((p) => p._id);
     }
 
     const baseFilter = { project: { $in: accessibleProjectIds } };

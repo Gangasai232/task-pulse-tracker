@@ -16,15 +16,15 @@ function getLegalTransitions(currentStatus, previousStatus = null) {
     case STATUSES.BACKLOG:
       return [STATUSES.IN_PROGRESS];
     case STATUSES.IN_PROGRESS:
-      return [STATUSES.IN_REVIEW, STATUSES.BLOCKED, STATUSES.DONE];
+      return [STATUSES.IN_REVIEW, STATUSES.BLOCKED];
     case STATUSES.IN_REVIEW:
       return [STATUSES.DONE, STATUSES.IN_PROGRESS, STATUSES.BLOCKED];
     case STATUSES.BLOCKED:
-      // Unblocking returns to previousStatus
+      // Unblocking returns strictly to state it was blocked from
       return previousStatus ? [previousStatus] : [STATUSES.IN_PROGRESS, STATUSES.IN_REVIEW];
     case STATUSES.DONE:
-      // Reopening allowed
-      return [STATUSES.BACKLOG, STATUSES.IN_PROGRESS];
+      // Reopening returns to IN_PROGRESS
+      return [STATUSES.IN_PROGRESS];
     default:
       return [];
   }

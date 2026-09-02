@@ -1,8 +1,10 @@
 import axios from 'axios';
 
 const getBaseURL = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  let envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    envUrl = envUrl.trim().replace(/\/+$/, '');
+    return envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`;
   }
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     return 'http://localhost:5000/api';

@@ -19,7 +19,7 @@ export const ProjectsPage = () => {
   const loadProjects = async () => {
     try {
       setLoading(true);
-      const data = await api.get(`/projects?includeArchived=${showArchived}`);
+      const data = await api.get('/projects?includeArchived=true');
       setProjects(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load projects:', err);
@@ -31,7 +31,10 @@ export const ProjectsPage = () => {
 
   useEffect(() => {
     loadProjects();
-  }, [showArchived]);
+  }, []);
+
+  const displayedProjects = projects.filter((p) => (showArchived ? p.archived : !p.archived));
+  const archivedCount = projects.filter((p) => p.archived).length;
 
   const handleArchiveToggle = async (projectId, currentArchivedState, e) => {
     e.stopPropagation();
@@ -76,7 +79,7 @@ export const ProjectsPage = () => {
             }`}
           >
             <Archive className="w-3.5 h-3.5" />
-            {showArchived ? 'Showing Archived' : 'Show Archived'}
+            {showArchived ? `Showing Archived (${archivedCount})` : `Show Archived (${archivedCount})`}
           </button>
 
           {isManager && (
@@ -98,7 +101,7 @@ export const ProjectsPage = () => {
         <div className="flex justify-center py-12">
           <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
-      ) : projects.length === 0 ? (
+      ) : displayedProjects.length === 0 ? (
         <div className="glass-panel p-12 rounded-xl text-center space-y-3 border border-slate-800">
           <FolderKanban className="w-10 h-10 text-slate-600 mx-auto" />
           <h3 className="text-base font-bold text-slate-300">No Projects Found</h3>
@@ -108,7 +111,7 @@ export const ProjectsPage = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
+          {displayedProjects.map((project) => (
             <div
               key={project._id}
               onClick={() => navigate(`/projects/${project._id}`)}

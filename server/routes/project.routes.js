@@ -8,14 +8,19 @@ const { authMiddleware, requireRole } = require('../middleware/auth');
 // GET /api/projects - List accessible projects
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const { includeArchived } = req.query;
+    const { includeArchived, archivedOnly } = req.query;
     let query = {};
 
-    if (req.user.role !== 'MANAGER') {
+    if (req.user.role === 'MANAGER') {
+      query.$or = [{ owner: req.user._id }, { members: req.user._id }];
+    } else if (req.user.role === 'MEMBER') {
       query.members = req.user._id;
     }
+    // ADMIN sees all projects by default
 
-    if (includeArchived !== 'true') {
+    if (archivedOnly === 'true') {
+      query.archived = true;
+    } else if (includeArchived !== 'true') {
       query.archived = false;
     }
 
@@ -84,12 +89,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Project not found.' });
     }
 
-    // Access check: Members can only see projects they belong to
-    if (
-      req.user.role !== 'MANAGER' &&
-      !project.members.some((m) => m._id.toString() === req.user._id.toString())
-    ) {
-      return res.status(403).json({ error: 'Access denied to this project.' });
+    // Access check: Only Admin or users allocated to this project (owner or member) can view it
+    const isAdmin = req.user.role === 'ADMIN';
+    const isOwner = project.owner && project.owner._id.toString() === req.user._id.toString();
+    const isMember = project.members.some((m) => m._id.toString() === req.user._id.toString());
+
+    if (!isAdmin && !isOwner && !isMember) {
+      return res.status(403).json({ error: 'Access denied. You are not assigned to this project.' });
     }
 
     return res.json(project);
@@ -99,7 +105,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// PUT /api/projects/:id - Edit project & members (MANAGER only)
+// PUT /api/projects/:id - Edit project & members (MANAGER/ADMIN only)
 router.put('/:id', authMiddleware, requireRole('MANAGER'), async (req, res) => {
   try {
     const { name, description, owner, members } = req.body;
@@ -107,6 +113,15 @@ router.put('/:id', authMiddleware, requireRole('MANAGER'), async (req, res) => {
 
     if (!project) {
       return res.status(404).json({ error: 'Project not found.' });
+    }
+
+    // Access check: Only Admin or project owner/member managers can modify project
+    const isAdmin = req.user.role === 'ADMIN';
+    const isOwner = project.owner && project.owner.toString() === req.user._id.toString();
+    const isMember = project.members.some((m) => m.toString() === req.user._id.toString());
+
+    if (!isAdmin && !isOwner && !isMember) {
+      return res.status(403).json({ error: 'Permission denied. You are not assigned to this project.' });
     }
 
     const oldMembers = project.members.map((id) => id.toString());
@@ -158,7 +173,7 @@ router.put('/:id', authMiddleware, requireRole('MANAGER'), async (req, res) => {
   }
 });
 
-// PATCH /api/projects/:id/archive - Archive / Restore project (MANAGER only)
+// PATCH /api/projects/:id/archive - Archive / Restore project (MANAGER/ADMIN only)
 router.patch('/:id/archive', authMiddleware, requireRole('MANAGER'), async (req, res) => {
   try {
     const { archived } = req.body;
@@ -168,8 +183,17 @@ router.patch('/:id/archive', authMiddleware, requireRole('MANAGER'), async (req,
       return res.status(404).json({ error: 'Project not found.' });
     }
 
-    project.archived = Boolean(archived);
-    await project.save();
+    // Access check: Only Admin or allocated project manager can archive/restore
+    const isAdmin = req.user.role === 'ADMIN';
+    const isOwner = project.owner && project.owner.toString() === req.user._id.toString();
+    const isMember = project.members.some((m) => m.toString() === req.user._id.toString());
+
+    if (!isAdmin && !isOwner && !isMember) {
+      return res.status(403).json({ error: 'Permission denied. You are not assigned to this project.' });
+    }
+
+    const isArchived = Boolean(archived);
+    await Project.findByIdAndUpdate(project._id, { $set: { archived: isArchived } }, { new: true });
 
     const updated = await Project.findById(project._id)
       .populate('owner', 'name email role')
@@ -188,6 +212,15 @@ router.delete('/:id', authMiddleware, requireRole('MANAGER'), async (req, res) =
     const project = await Project.findById(req.params.id);
     if (!project) {
       return res.status(404).json({ error: 'Project not found.' });
+    }
+
+    // Access check: Only Admin or allocated project owner/member manager can delete project
+    const isAdmin = req.user.role === 'ADMIN';
+    const isOwner = project.owner && project.owner.toString() === req.user._id.toString();
+    const isMember = project.members.some((m) => m.toString() === req.user._id.toString());
+
+    if (!isAdmin && !isOwner && !isMember) {
+      return res.status(403).json({ error: 'Permission denied. You are not assigned to this project.' });
     }
 
     // Cascade delete all tasks belonging to this project

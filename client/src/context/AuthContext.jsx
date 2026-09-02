@@ -78,7 +78,8 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         refreshAlerts: fetchAlerts,
-        isManager: user?.role === 'MANAGER',
+        isManager: user?.role === 'MANAGER' || user?.role === 'ADMIN',
+        isAdmin: user?.role === 'ADMIN',
       }}
     >
       {children}

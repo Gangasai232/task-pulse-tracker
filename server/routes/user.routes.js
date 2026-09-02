@@ -55,13 +55,13 @@ router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => 
   try {
     const targetUserId = req.params.id;
 
-    if (targetUserId === req.user._id.toString()) {
-      return res.status(400).json({ error: 'You cannot delete your own active admin account.' });
-    }
-
     const userToDelete = await User.findById(targetUserId);
     if (!userToDelete) {
       return res.status(404).json({ error: 'User account not found.' });
+    }
+
+    if (userToDelete.role === 'ADMIN') {
+      return res.status(400).json({ error: 'System Administrator accounts cannot be deleted.' });
     }
 
     await User.findByIdAndDelete(targetUserId);
@@ -84,6 +84,31 @@ router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => 
   } catch (err) {
     console.error('Delete user error:', err);
     return res.status(500).json({ error: 'Failed to delete user account.' });
+  }
+});
+
+// PUT /api/users/:id/password - Reset user password (ADMIN ONLY)
+router.put('/:id/password', authMiddleware, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User account not found.' });
+    }
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.findByIdAndUpdate(user._id, { $set: { password: newHashedPassword } }, { new: true });
+
+    console.log(`[ADMIN] Reset password successfully for user ${user.email}`);
+
+    return res.json({ message: `Password for ${user.email} updated successfully.` });
+  } catch (err) {
+    console.error('Reset user password error:', err);
+    return res.status(500).json({ error: 'Failed to reset user password.' });
   }
 });
 

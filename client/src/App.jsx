@@ -94,13 +94,13 @@ const ProtectedLayout = () => {
 
         <main className="flex-1 p-8 overflow-y-auto">
           <Routes>
-            <Route path="/" element={isAdmin ? <AdminConsole /> : <DashboardPage />} />
+            <Route path="/" element={<DashboardPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:id" element={<ProjectDetailPage />} />
             <Route path="/all-tasks" element={<AllTasksPage />} />
             <Route path="/my-tasks" element={<MyTasksPage />} />
             <Route path="/users" element={isManagerOrAdmin ? <UsersPage /> : <Navigate to="/" replace />} />
-            <Route path="/admin" element={<AdminConsole />} />
+            <Route path="/admin" element={isAdmin ? <AdminConsole /> : <Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

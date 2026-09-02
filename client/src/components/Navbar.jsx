@@ -30,9 +30,6 @@ export const Navbar = ({ onOpenAlertsModal }) => {
 
       {/* Right User Actions */}
       <div className="flex items-center gap-3">
-        {/* Day / Night Mode Theme Switcher */}
-        <ThemeToggle />
-
         {/* Overdue Alerts Badge */}
         <button
           onClick={onOpenAlertsModal}

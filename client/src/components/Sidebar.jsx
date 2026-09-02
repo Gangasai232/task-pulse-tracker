@@ -7,25 +7,21 @@ export const Sidebar = ({ onOpenCreateProject }) => {
   const { isManager, user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
 
-  // Dedicated Admin navigation vs Standard Manager/Member navigation
-  const navItems = isAdmin
-    ? [
-        { to: '/admin', label: 'Admin Governance', icon: ShieldCheck, highlight: true },
-        { to: '/users', label: 'Registered Accounts', icon: Users },
-      ]
-    : [
-        { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-        { to: '/projects', label: 'Projects', icon: FolderKanban },
-        { to: '/all-tasks', label: 'All Tasks & Search', icon: Search },
-        { to: '/my-tasks', label: 'My Assigned Tasks', icon: CheckSquare },
-        ...(isManager ? [{ to: '/users', label: 'User Directory', icon: Users }] : []),
-      ];
+  // Navigation items for all user roles (with Admin Governance link for Admins)
+  const navItems = [
+    ...(isAdmin ? [{ to: '/admin', label: 'Admin Governance', icon: ShieldCheck, highlight: true }] : []),
+    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/projects', label: 'Projects', icon: FolderKanban },
+    { to: '/all-tasks', label: 'All Tasks & Search', icon: Search },
+    { to: '/my-tasks', label: 'My Assigned Tasks', icon: CheckSquare },
+    ...(isManager ? [{ to: '/users', label: 'User Directory', icon: Users }] : []),
+  ];
 
   return (
     <aside className="w-60 bg-[#0f172a] border-r border-slate-800 min-h-[calc(100vh-57px)] p-4 flex flex-col justify-between">
       <div className="space-y-5">
-        {/* Only Manager/Member project creation button */}
-        {!isAdmin && isManager && (
+        {/* Project creation button for Managers & Admins */}
+        {isManager && (
           <button
             onClick={onOpenCreateProject}
             className="w-full py-2 px-3.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition active:scale-95"
@@ -35,16 +31,9 @@ export const Sidebar = ({ onOpenCreateProject }) => {
           </button>
         )}
 
-        {isAdmin && (
-          <div className="p-3 rounded-lg bg-slate-900 border border-indigo-900/60 text-xs font-semibold text-indigo-300 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-            <span>Admin Governance Portal</span>
-          </div>
-        )}
-
         <nav className="space-y-1">
           <div className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-            {isAdmin ? 'System Governance' : 'Menu'}
+            Menu
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;

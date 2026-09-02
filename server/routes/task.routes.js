@@ -32,27 +32,28 @@ router.get('/', authMiddleware, async (req, res) => {
     const limitNum = parseInt(limit, 10) || 20;
     const skip = (pageNum - 1) * limitNum;
 
-    // Determine accessible projects for non-managers
+    // Determine accessible projects
     let accessibleProjectIds = [];
-    if (req.user.role !== 'MANAGER') {
-      const userProjects = await Project.find({ members: req.user._id, archived: false }).select('_id');
-      accessibleProjectIds = userProjects.map((p) => p._id);
-    } else {
-      // Managers can see all non-archived projects by default unless specific projectId specified
+    if (req.user.role === 'ADMIN') {
       const activeProjects = await Project.find({ archived: false }).select('_id');
       accessibleProjectIds = activeProjects.map((p) => p._id);
+    } else {
+      // MANAGER & MEMBER: Only see projects where they are owner OR member
+      const userProjects = await Project.find({
+        archived: false,
+        $or: [{ owner: req.user._id }, { members: req.user._id }],
+      }).select('_id');
+      accessibleProjectIds = userProjects.map((p) => p._id);
     }
 
     const filter = { project: { $in: accessibleProjectIds } };
 
     if (projectId) {
-      if (req.user.role !== 'MANAGER') {
-        const isAccessible = accessibleProjectIds.some(
-          (pId) => pId.toString() === projectId.toString()
-        );
-        if (!isAccessible) {
-          return res.status(403).json({ error: 'Access denied. You are not a member of this project.' });
-        }
+      const isAccessible = accessibleProjectIds.some(
+        (pId) => pId.toString() === projectId.toString()
+      );
+      if (!isAccessible) {
+        return res.status(403).json({ error: 'Access denied. You are not assigned to this project.' });
       }
       filter.project = projectId;
     }
@@ -65,11 +66,11 @@ router.get('/', authMiddleware, async (req, res) => {
       filter.priority = priority;
     }
 
-    if (req.user.role !== 'MANAGER') {
+    if (req.user.role !== 'MANAGER' && req.user.role !== 'ADMIN') {
       // Non-manager members only see tasks assigned to themselves
       filter.assignees = req.user._id;
     } else if (assigneeId) {
-      // Managers can filter by specific assignee
+      // Managers and Admins can filter by specific assignee
       filter.assignees = assigneeId;
     }
 
@@ -148,9 +149,10 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Project not found.' });
     }
 
-    // Access check: Only project members or managers can create tasks
+    // Access check: Only project members, managers, or admins can create tasks
     if (
       req.user.role !== 'MANAGER' &&
+      req.user.role !== 'ADMIN' &&
       !project.members.some((m) => m.toString() === req.user._id.toString())
     ) {
       return res.status(403).json({ error: 'You are not a member of this project.' });
@@ -477,7 +479,11 @@ router.post('/bulk', authMiddleware, async (req, res) => {
 
         // Access check
         const projectMemberIds = task.project.members.map((m) => m.toString());
-        if (req.user.role !== 'MANAGER' && !projectMemberIds.includes(req.user._id.toString())) {
+        if (
+          req.user.role !== 'MANAGER' &&
+          req.user.role !== 'ADMIN' &&
+          !projectMemberIds.includes(req.user._id.toString())
+        ) {
           results.push({ taskId: id, success: false, error: 'Access denied to task project.' });
           continue;
         }

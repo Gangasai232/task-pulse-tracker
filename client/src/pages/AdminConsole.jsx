@@ -11,6 +11,7 @@ import {
   Search,
   CheckCircle2,
   Trash2,
+  KeyRound,
 } from 'lucide-react';
 
 export const AdminConsole = () => {
@@ -77,6 +78,23 @@ export const AdminConsole = () => {
       const res = await api.delete(`/users/${targetId}`);
       setSuccessMsg(res.message || `Deleted account "${targetName}".`);
       await loadUsers();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleResetPassword = async (targetId, targetName) => {
+    const newPass = window.prompt(`Enter new password for "${targetName}" (at least 6 characters):`);
+    if (!newPass) return;
+    if (newPass.length < 6) {
+      alert('Password must be at least 6 characters long.');
+      return;
+    }
+    try {
+      setError('');
+      setSuccessMsg('');
+      const res = await api.put(`/users/${targetId}/password`, { newPassword: newPass });
+      setSuccessMsg(res.message || `Password for "${targetName}" reset successfully.`);
     } catch (err) {
       setError(err.message);
     }
@@ -312,7 +330,15 @@ export const AdminConsole = () => {
                     {u.role}
                   </span>
 
-                  {user?._id !== u._id && (
+                  <button
+                    onClick={() => handleResetPassword(u._id, u.name)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-950/40 border border-transparent hover:border-indigo-900/50 transition"
+                    title={`Reset password for ${u.name}`}
+                  >
+                    <KeyRound className="w-4 h-4" />
+                  </button>
+
+                  {u.role !== 'ADMIN' && (
                     <button
                       onClick={() => handleDeleteUser(u._id, u.name)}
                       className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-900/50 transition"

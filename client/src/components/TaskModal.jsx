@@ -102,6 +102,14 @@ export const TaskModal = ({ taskId, onClose, onTaskUpdated }) => {
     }
   };
 
+  const toggleAssigneeSelection = (userId) => {
+    if (selectedAssignees.includes(userId)) {
+      setSelectedAssignees(selectedAssignees.filter((id) => id !== userId));
+    } else {
+      setSelectedAssignees([...selectedAssignees, userId]);
+    }
+  };
+
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     try {
@@ -255,6 +263,33 @@ export const TaskModal = ({ taskId, onClose, onTaskUpdated }) => {
                       onChange={(e) => setDueDate(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-slate-100 focus:outline-none"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Assign Project Members</label>
+                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2.5 bg-slate-950 rounded-lg border border-slate-700">
+                    {allProjectMembers.length > 0 ? (
+                      allProjectMembers.map((m) => {
+                        const isSel = selectedAssignees.includes(m._id);
+                        return (
+                          <button
+                            key={m._id}
+                            type="button"
+                            onClick={() => toggleAssigneeSelection(m._id)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
+                              isSel
+                                ? 'bg-indigo-900 text-indigo-200 border-indigo-600'
+                                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                            }`}
+                          >
+                            {m.name}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <span className="text-xs text-slate-500 italic">No project members available</span>
+                    )}
                   </div>
                 </div>
 
