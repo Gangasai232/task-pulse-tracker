@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { ProjectModal } from '../components/ProjectModal';
-import { FolderKanban, Plus, Archive, RefreshCw, Users, ArrowRight } from 'lucide-react';
+import { FolderKanban, Plus, Archive, RefreshCw, Users, ArrowRight, Trash2 } from 'lucide-react';
 
 export const ProjectsPage = () => {
   const navigate = useNavigate();
@@ -20,9 +20,10 @@ export const ProjectsPage = () => {
     try {
       setLoading(true);
       const data = await api.get(`/projects?includeArchived=${showArchived}`);
-      setProjects(data);
+      setProjects(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load projects:', err);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -39,6 +40,19 @@ export const ProjectsPage = () => {
       await loadProjects();
     } catch (err) {
       alert(`Failed to archive/restore project: ${err.message}`);
+    }
+  };
+
+  const handleDeleteProject = async (projectId, projectName, e) => {
+    e.stopPropagation();
+    if (!window.confirm(`Are you sure you want to delete project "${projectName}"? All associated tasks and timeline history will be permanently deleted.`)) {
+      return;
+    }
+    try {
+      await api.delete(`/projects/${projectId}`);
+      await loadProjects();
+    } catch (err) {
+      alert(`Failed to delete project: ${err.message}`);
     }
   };
 
@@ -134,13 +148,23 @@ export const ProjectsPage = () => {
 
                 <div className="flex items-center gap-2">
                   {isManager && (
-                    <button
-                      onClick={(e) => handleArchiveToggle(project._id, project.archived, e)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-amber-950/40 transition"
-                      title={project.archived ? 'Restore Project' : 'Archive Project'}
-                    >
-                      {project.archived ? <RefreshCw className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => handleArchiveToggle(project._id, project.archived, e)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-amber-950/40 transition"
+                        title={project.archived ? 'Restore Project' : 'Archive Project'}
+                      >
+                        {project.archived ? <RefreshCw className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
+                      </button>
+
+                      <button
+                        onClick={(e) => handleDeleteProject(project._id, project.name, e)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 transition"
+                        title="Delete Project"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
                   )}
                   <span className="text-indigo-400 font-semibold flex items-center gap-0.5 text-xs">
                     View <ArrowRight className="w-3.5 h-3.5" />

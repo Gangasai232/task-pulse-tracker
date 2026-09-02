@@ -17,6 +17,7 @@ import {
   Lock,
   ArrowLeft,
   Search,
+  Trash2,
 } from 'lucide-react';
 
 const BOARD_COLUMNS = [
@@ -157,13 +158,31 @@ export const ProjectDetailPage = () => {
           </div>
 
           {isManager && (
-            <button
-              onClick={() => setShowEditProject(true)}
-              className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition shadow-sm"
-              title="Edit Project Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
+            <>
+              <button
+                onClick={() => setShowEditProject(true)}
+                className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition shadow-sm"
+                title="Edit Project Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!window.confirm(`Are you sure you want to delete project "${project.name}"? All associated tasks and timeline history will be permanently deleted.`)) return;
+                  try {
+                    await api.delete(`/projects/${project._id}`);
+                    navigate('/projects');
+                  } catch (err) {
+                    alert(`Failed to delete project: ${err.message}`);
+                  }
+                }}
+                className="p-2.5 rounded-xl bg-slate-900 hover:bg-rose-950/40 text-slate-300 hover:text-rose-400 border border-slate-800 hover:border-rose-900/50 transition shadow-sm"
+                title="Delete Project"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
           )}
 
           <button

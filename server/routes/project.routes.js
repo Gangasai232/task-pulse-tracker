@@ -126,18 +126,15 @@ router.put('/:id', authMiddleware, requireRole('MANAGER'), async (req, res) => {
     // Requirement 5: Removing someone from a project unassigns them from that project's tasks.
     const removedMemberIds = oldMembers.filter((mId) => !newMembers.includes(mId));
     if (removedMemberIds.length > 0) {
-      // Find all tasks in project with removed members
       const affectedTasks = await Task.find({
         project: project._id,
         assignees: { $in: removedMemberIds },
       });
 
       for (const task of affectedTasks) {
-        const previousAssignees = [...task.assignees];
         task.assignees = task.assignees.filter((aId) => !removedMemberIds.includes(aId.toString()));
         await task.save();
 
-        // Log timeline event
         await ActivityLog.create({
           task: task._id,
           actor: req.user._id,
@@ -182,6 +179,35 @@ router.patch('/:id/archive', authMiddleware, requireRole('MANAGER'), async (req,
   } catch (err) {
     console.error('Archive project error:', err);
     return res.status(500).json({ error: 'Failed to archive/restore project.' });
+  }
+});
+
+// DELETE /api/projects/:id - Delete project & cascade tasks (MANAGER/ADMIN only)
+router.delete('/:id', authMiddleware, requireRole('MANAGER'), async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found.' });
+    }
+
+    // Cascade delete all tasks belonging to this project
+    const projectTasks = await Task.find({ project: project._id }).select('_id');
+    const taskIds = projectTasks.map((t) => t._id);
+
+    await Task.deleteMany({ project: project._id });
+
+    if (taskIds.length > 0) {
+      await ActivityLog.deleteMany({ task: { $in: taskIds } });
+      const AlertDismissal = require('../models/AlertDismissal');
+      await AlertDismissal.deleteMany({ task: { $in: taskIds } });
+    }
+
+    await Project.findByIdAndDelete(project._id);
+
+    return res.json({ message: `Project '${project.name}' deleted successfully.`, projectId: project._id });
+  } catch (err) {
+    console.error('Delete project error:', err);
+    return res.status(500).json({ error: 'Failed to delete project.' });
   }
 });
 
