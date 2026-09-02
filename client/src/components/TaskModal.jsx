@@ -202,12 +202,14 @@ export const TaskModal = ({ taskId, onClose, onTaskUpdated }) => {
                 <p className="text-sm text-slate-300 whitespace-pre-wrap bg-slate-900/40 p-4 rounded-xl border border-slate-800/60">
                   {task.description || 'No description provided.'}
                 </p>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="mt-3 text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
-                >
-                  Edit Task Details →
-                </button>
+                {isManager && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="mt-3 text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                  >
+                    Edit Task Details →
+                  </button>
+                )}
               </div>
             ) : (
               <form onSubmit={handleSaveEdit} className="space-y-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">

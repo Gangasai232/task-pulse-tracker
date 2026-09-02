@@ -253,6 +253,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Permission denied. Only assigned staff members, managers, or admins can update this task.' });
     }
 
+    const isEditingDetails = title !== undefined || description !== undefined || priority !== undefined || dueDate !== undefined || assignees !== undefined || blockingTasks !== undefined;
+    if (isEditingDetails && !isManagerOrAdmin) {
+      return res.status(403).json({ error: 'Permission denied. Only Managers and Admins can edit task details (title, description, priority, due date, assignees, and dependencies).' });
+    }
+
     // Safely extract project member IDs
     const projectMemberIds = task.project && task.project.members
       ? task.project.members.map((m) => m.toString())
