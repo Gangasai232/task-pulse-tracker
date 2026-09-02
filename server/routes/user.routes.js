@@ -101,6 +101,8 @@ router.put('/:id/password', authMiddleware, requireRole('ADMIN'), async (req, re
     }
 
     const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = newHashedPassword;
+    await user.save();
     await User.findByIdAndUpdate(user._id, { $set: { password: newHashedPassword } }, { new: true });
 
     console.log(`[ADMIN] Reset password successfully for user ${user.email}`);

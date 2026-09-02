@@ -83,7 +83,9 @@ router.put('/change-password', authMiddleware, async (req, res) => {
     // Hash new password strictly with bcrypt
     const newHashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Atomic database update using findByIdAndUpdate
+    // Save on document instance and perform atomic findByIdAndUpdate for 100% fail-safe persistence
+    user.password = newHashedPassword;
+    await user.save();
     await User.findByIdAndUpdate(user._id, { $set: { password: newHashedPassword } }, { new: true });
 
     console.log(`[AUTH] Password updated successfully for user ${user.email}`);
