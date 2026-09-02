@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import api from '../api';
 import { KeyRound, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 
@@ -51,9 +52,9 @@ export const ChangePasswordModal = ({ onClose }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="glass-panel w-full max-w-md rounded-2xl border border-slate-800 p-6 space-y-5 shadow-2xl relative my-auto animate-fadeIn">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="glass-panel w-full max-w-md rounded-2xl border border-slate-800 p-6 space-y-5 shadow-2xl relative z-[10000] animate-fadeIn">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <KeyRound className="w-5 h-5 text-indigo-400" />
@@ -98,7 +99,7 @@ export const ChangePasswordModal = ({ onClose }) => {
             <label className="block text-xs font-semibold text-slate-300 mb-1">New Password</label>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="•••••••• (Min 6 chars)"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
@@ -118,25 +119,26 @@ export const ChangePasswordModal = ({ onClose }) => {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold text-xs transition"
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition"
             >
               Cancel
             </button>
-
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-sm transition active:scale-95 disabled:opacity-50"
+              className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 disabled:opacity-50 transition"
             >
-              {submitting ? 'Updating Password...' : 'Update Password'}
+              {submitting ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };
