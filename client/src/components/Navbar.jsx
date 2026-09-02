@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
 import { ChangePasswordModal } from './ChangePasswordModal';
-import { Bell, LogOut, KeyRound } from 'lucide-react';
+import { Bell, LogOut, KeyRound, Activity } from 'lucide-react';
 
 export const Navbar = ({ onOpenAlertsModal }) => {
   const { user, alertCount, logout } = useAuth();
@@ -12,8 +12,8 @@ export const Navbar = ({ onOpenAlertsModal }) => {
     <header className="sticky top-0 z-30 bg-[#0f172a]/95 backdrop-blur-md border-b border-slate-800 px-6 py-3 flex items-center justify-between shadow-sm">
       {/* Left Brand Identity */}
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
-          T
+        <div className="h-8.5 w-8.5 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
+          <Activity className="w-5 h-5 text-white" />
         </div>
 
         <div>

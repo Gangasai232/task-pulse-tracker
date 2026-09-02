@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, CheckSquare, Search, Plus, Users, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Layers, CheckSquare, Search, Plus, Users, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const Sidebar = ({ onOpenCreateProject }) => {
@@ -11,7 +11,7 @@ export const Sidebar = ({ onOpenCreateProject }) => {
   const navItems = [
     ...(isAdmin ? [{ to: '/admin', label: 'Admin Governance', icon: ShieldCheck, highlight: true }] : []),
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/projects', label: 'Projects', icon: FolderKanban },
+    { to: '/projects', label: 'Projects', icon: Layers },
     { to: '/all-tasks', label: 'All Tasks & Search', icon: Search },
     { to: '/my-tasks', label: 'My Assigned Tasks', icon: CheckSquare },
     ...(isManager ? [{ to: '/users', label: 'User Directory', icon: Users }] : []),

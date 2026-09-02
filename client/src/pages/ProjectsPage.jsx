@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { ProjectModal } from '../components/ProjectModal';
-import { FolderKanban, Plus, Archive, RefreshCw, Users, ArrowRight, Trash2 } from 'lucide-react';
+import { Layers, Plus, Archive, RefreshCw, Users, ArrowRight, Trash2 } from 'lucide-react';
 
 export const ProjectsPage = () => {
   const navigate = useNavigate();
@@ -103,7 +103,7 @@ export const ProjectsPage = () => {
         </div>
       ) : displayedProjects.length === 0 ? (
         <div className="glass-panel p-12 rounded-xl text-center space-y-3 border border-slate-800">
-          <FolderKanban className="w-10 h-10 text-slate-600 mx-auto" />
+          <Layers className="w-10 h-10 text-slate-600 mx-auto" />
           <h3 className="text-base font-bold text-slate-300">No Projects Found</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
             {showArchived ? 'No archived projects exist in the system.' : 'You have no active project access.'}
