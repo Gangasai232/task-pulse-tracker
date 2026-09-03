@@ -6,6 +6,22 @@ const AlertDismissal = require('../models/AlertDismissal');
 const { authMiddleware } = require('../middleware/auth');
 const { STATUSES } = require('../utils/stateMachine');
 
+function getCalendarWeekStart(dateObj) {
+  const d = new Date(dateObj);
+  const day = d.getDay(); // 0 = Sunday, 1 = Monday...
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+function getCalendarWeekEnd(mondayDate) {
+  const sunday = new Date(mondayDate);
+  sunday.setDate(mondayDate.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  return sunday;
+}
+
 // GET /api/dashboard/stats - Overview metrics, status breakdown, assignee breakdown, 8-week completions
 router.get('/stats', authMiddleware, async (req, res) => {
   try {
@@ -14,7 +30,6 @@ router.get('/stats', authMiddleware, async (req, res) => {
       const activeProjects = await Project.find({ archived: false }).select('_id');
       accessibleProjectIds = activeProjects.map((p) => p._id);
     } else {
-      // MANAGER & MEMBER: Only calculate metrics for projects where user is owner or member
       const userProjects = await Project.find({
         archived: false,
         $or: [{ owner: req.user._id }, { members: req.user._id }],
@@ -25,111 +40,160 @@ router.get('/stats', authMiddleware, async (req, res) => {
     const baseFilter = { project: { $in: accessibleProjectIds } };
     const now = new Date();
 
-    // 1. Headline numbers
-    const openTasksCount = await Task.countDocuments({
+    // 1. OPEN TASKS: Tasks that are not DONE
+    const openTasks = await Task.countDocuments({
       ...baseFilter,
       status: { $ne: STATUSES.DONE },
     });
 
-    const overdueCount = await Task.countDocuments({
+    // 2. OVERDUE TASKS: dueDate < now and status != DONE (Completed tasks NEVER count as overdue)
+    const overdueTasks = await Task.countDocuments({
       ...baseFilter,
       dueDate: { $lt: now },
       status: { $ne: STATUSES.DONE },
     });
 
-    // Start & End of current week
-    const startOfWeek = new Date(now);
-    startOfWeek.setHours(0, 0, 0, 0);
-    startOfWeek.setDate(now.getDate() - now.getDay());
+    // Current Calendar Week (Monday to Sunday)
+    const currentWeekMonday = getCalendarWeekStart(now);
+    const currentWeekSunday = getCalendarWeekEnd(currentWeekMonday);
 
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 7);
-
-    const dueThisWeekCount = await Task.countDocuments({
+    // 3. DUE THIS WEEK: Tasks whose due date falls within current calendar week
+    const dueThisWeek = await Task.countDocuments({
       ...baseFilter,
-      dueDate: { $gte: startOfWeek, $lt: endOfWeek },
-      status: { $ne: STATUSES.DONE },
+      dueDate: { $gte: currentWeekMonday, $lte: currentWeekSunday },
     });
 
-    const completedThisWeekCount = await Task.countDocuments({
+    // 4. COMPLETED THIS WEEK: Tasks completed during current calendar week
+    const accessibleTasks = await Task.find(baseFilter).select('_id');
+    const accessibleTaskIds = accessibleTasks.map((t) => t._id);
+
+    const ActivityLog = require('../models/ActivityLog');
+    const completionLogsThisWeek = await ActivityLog.find({
+      task: { $in: accessibleTaskIds },
+      type: 'STATUS_CHANGE',
+      $or: [{ newValue: STATUSES.DONE }, { 'details.newValue': STATUSES.DONE }, { 'details.newVal': STATUSES.DONE }],
+      createdAt: { $gte: currentWeekMonday, $lte: currentWeekSunday },
+    }).distinct('task');
+
+    const doneTasksUpdatedThisWeek = await Task.find({
       ...baseFilter,
       status: STATUSES.DONE,
-      updatedAt: { $gte: startOfWeek, $lt: endOfWeek },
-    });
+      updatedAt: { $gte: currentWeekMonday, $lte: currentWeekSunday },
+    }).select('_id');
 
-    // 2. Breakdown by status
+    const completedThisWeekTaskIds = new Set([
+      ...completionLogsThisWeek.map((id) => id.toString()),
+      ...doneTasksUpdatedThisWeek.map((t) => t._id.toString()),
+    ]);
+    const completedThisWeek = completedThisWeekTaskIds.size;
+
+    // 5. TASKS BY STATUS: Include all 5 status counts (BACKLOG, IN_PROGRESS, IN_REVIEW, BLOCKED, DONE)
     const statusAgg = await Task.aggregate([
       { $match: baseFilter },
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]);
 
-    const statusBreakdown = Object.values(STATUSES).map((st) => {
+    const tasksByStatus = Object.values(STATUSES).map((st) => {
       const match = statusAgg.find((s) => s._id === st);
       return { status: st, count: match ? match.count : 0 };
     });
 
-    // 3. Breakdown by assignee
+    // 6. TASKS BY ASSIGNEE: Breakdown by user + Unassigned
     const tasksWithAssignees = await Task.find(baseFilter).populate('assignees', 'name email role');
-    const assigneeMap = {};
+    const assigneeMap = new Map();
+    let unassignedCount = 0;
 
     tasksWithAssignees.forEach((t) => {
       if (!t.assignees || t.assignees.length === 0) {
-        assigneeMap['Unassigned'] = (assigneeMap['Unassigned'] || 0) + 1;
+        unassignedCount++;
       } else {
-        t.assignees.forEach((user) => {
-          const userName = user.name;
-          assigneeMap[userName] = (assigneeMap[userName] || 0) + 1;
+        t.assignees.forEach((u) => {
+          if (u && u._id) {
+            const uId = u._id.toString();
+            if (!assigneeMap.has(uId)) {
+              assigneeMap.set(uId, { userId: uId, name: u.name, count: 0 });
+            }
+            assigneeMap.get(uId).count += 1;
+          }
         });
       }
     });
 
-    const assigneeBreakdown = Object.keys(assigneeMap).map((name) => ({
-      name,
-      count: assigneeMap[name],
-    }));
+    const tasksByAssignee = Array.from(assigneeMap.values());
+    tasksByAssignee.push({ userId: null, name: 'Unassigned', count: unassignedCount });
 
-    // 4. Completions over last 8 weeks
-    const eightWeeksAgo = new Date(now);
-    eightWeeksAgo.setDate(now.getDate() - 56);
+    // 7. COMPLETIONS OVER LAST 8 WEEKS: 8 consecutive calendar weeks (Monday-Sunday)
+    const completionsLast8Weeks = [];
+    const sixtyDaysAgo = new Date(currentWeekMonday);
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 56);
 
-    const completedTasks8Weeks = await Task.find({
+    const completionLogs = await ActivityLog.find({
+      task: { $in: accessibleTaskIds },
+      type: 'STATUS_CHANGE',
+      $or: [{ newValue: STATUSES.DONE }, { 'details.newValue': STATUSES.DONE }, { 'details.newVal': STATUSES.DONE }],
+      createdAt: { $gte: sixtyDaysAgo },
+    }).select('task createdAt');
+
+    const taskCompletionDateMap = new Map();
+    completionLogs.forEach((log) => {
+      const tId = log.task.toString();
+      if (!taskCompletionDateMap.has(tId) || log.createdAt < taskCompletionDateMap.get(tId)) {
+        taskCompletionDateMap.set(tId, log.createdAt);
+      }
+    });
+
+    const doneTasksFallback = await Task.find({
       ...baseFilter,
       status: STATUSES.DONE,
-      updatedAt: { $gte: eightWeeksAgo },
-    }).select('updatedAt');
+      updatedAt: { $gte: sixtyDaysAgo },
+    }).select('_id updatedAt createdAt');
 
-    // Group into 8 weekly buckets
-    const weeklyCompletions = [];
+    doneTasksFallback.forEach((t) => {
+      const tId = t._id.toString();
+      if (!taskCompletionDateMap.has(tId)) {
+        taskCompletionDateMap.set(tId, t.updatedAt || t.createdAt);
+      }
+    });
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
     for (let i = 7; i >= 0; i--) {
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - i * 7 - now.getDay());
-      weekStart.setHours(0, 0, 0, 0);
+      const weekMonday = new Date(currentWeekMonday);
+      weekMonday.setDate(currentWeekMonday.getDate() - i * 7);
+      weekMonday.setHours(0, 0, 0, 0);
 
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7);
+      const weekSunday = getCalendarWeekEnd(weekMonday);
 
-      const count = completedTasks8Weeks.filter(
-        (t) => t.updatedAt >= weekStart && t.updatedAt < weekEnd
-      ).length;
+      let weekCount = 0;
+      taskCompletionDateMap.forEach((compDate) => {
+        if (compDate >= weekMonday && compDate <= weekSunday) {
+          weekCount++;
+        }
+      });
 
-      const label = `Wk of ${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
-      weeklyCompletions.push({ week: label, count });
+      const label = `${monthNames[weekMonday.getMonth()]} ${weekMonday.getDate()}`;
+      completionsLast8Weeks.push({
+        week: label,
+        count: weekCount,
+      });
     }
 
     return res.json({
-      headline: {
-        openTasks: openTasksCount,
-        overdueTasks: overdueCount,
-        dueThisWeek: dueThisWeekCount,
-        completedThisWeek: completedThisWeekCount,
-      },
-      statusBreakdown,
-      assigneeBreakdown,
-      weeklyCompletions,
+      openTasks,
+      overdueTasks,
+      dueThisWeek,
+      completedThisWeek,
+      tasksByStatus,
+      tasksByAssignee,
+      completionsLast8Weeks,
+      headline: { openTasks, overdueTasks, dueThisWeek, completedThisWeek },
+      statusBreakdown: tasksByStatus,
+      assigneeBreakdown: tasksByAssignee,
+      weeklyCompletions: completionsLast8Weeks,
     });
   } catch (err) {
     console.error('Fetch dashboard stats error:', err);
-    return res.status(500).json({ error: 'Failed to fetch dashboard statistics.' });
+    return res.status(500).json({ error: 'Failed to calculate dashboard statistics.' });
   }
 });
 

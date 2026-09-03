@@ -138,7 +138,7 @@ router.put('/:id', authMiddleware, requireRole('MANAGER'), async (req, res) => {
 
     await project.save();
 
-    // Requirement 5: Removing someone from a project unassigns them from that project's tasks.
+    // Unassign removed project members from project's tasks
     const removedMemberIds = oldMembers.filter((mId) => !newMembers.includes(mId));
     if (removedMemberIds.length > 0) {
       const affectedTasks = await Task.find({
@@ -147,18 +147,25 @@ router.put('/:id', authMiddleware, requireRole('MANAGER'), async (req, res) => {
       });
 
       for (const task of affectedTasks) {
+        const unassignedFromThisTask = task.assignees.filter((aId) =>
+          removedMemberIds.includes(aId.toString())
+        );
+
         task.assignees = task.assignees.filter((aId) => !removedMemberIds.includes(aId.toString()));
         await task.save();
 
-        await ActivityLog.create({
-          task: task._id,
-          actor: req.user._id,
-          type: 'ASSIGNMENT_CHANGE',
-          details: {
-            reason: 'Member removed from project',
-            removedUserIds: removedMemberIds,
-          },
-        });
+        for (const uId of unassignedFromThisTask) {
+          await ActivityLog.create({
+            task: task._id,
+            actor: req.user._id,
+            type: 'UNASSIGNED',
+            targetUser: uId,
+            details: {
+              userId: uId.toString(),
+              reason: 'Member removed from project',
+            },
+          });
+        }
       }
     }
 

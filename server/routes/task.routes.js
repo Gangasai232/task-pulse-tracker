@@ -225,6 +225,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     // Fetch immutable activity log / timeline for this task
     const timeline = await ActivityLog.find({ task: task._id })
       .populate('actor', 'name email avatarUrl role')
+      .populate('targetUser', 'name email avatarUrl role')
       .sort({ createdAt: 1 });
 
     const taskObj = task.toObject();
@@ -267,6 +268,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     const logsToCreate = [];
 
+    // If status or dueDate changed, clear prior alert dismissals so new overdue conditions re-trigger alerts
+    if ((status && status !== task.status) || dueDate !== undefined) {
+      await AlertDismissal.deleteMany({ task: task._id });
+    }
+
     // State machine check if status changed
     if (status && status !== task.status) {
       // 1. Check legal transitions
@@ -297,58 +303,86 @@ router.put('/:id', authMiddleware, async (req, res) => {
         task: task._id,
         actor: req.user._id,
         type: 'STATUS_CHANGE',
-        details: { oldVal: oldStatus, newVal: status },
+        oldValue: oldStatus,
+        newValue: status,
+        details: { oldValue: oldStatus, newValue: status },
       });
     }
 
-    // Assignee updates
+    // Explicit Assignee Addition and Removal tracking
     if (assignees !== undefined && Array.isArray(assignees)) {
       let validAssignees = assignees;
       if (projectMemberIds.length > 0) {
         validAssignees = assignees.filter((aId) => projectMemberIds.includes(aId.toString()));
       }
 
-      const oldAssigneesStr = task.assignees.map((id) => id.toString()).sort().join(',');
-      const newAssigneesStr = validAssignees.map((id) => id.toString()).sort().join(',');
+      const oldAssigneeIds = task.assignees.map((id) => (id._id ? id._id.toString() : id.toString()));
+      const newAssigneeIds = validAssignees.map((id) => id.toString());
 
-      if (oldAssigneesStr !== newAssigneesStr) {
-        task.assignees = validAssignees;
+      const addedUserIds = newAssigneeIds.filter((id) => !oldAssigneeIds.includes(id));
+      const removedUserIds = oldAssigneeIds.filter((id) => !newAssigneeIds.includes(id));
+
+      for (const uId of removedUserIds) {
         logsToCreate.push({
           task: task._id,
           actor: req.user._id,
-          type: 'ASSIGNMENT_CHANGE',
-          details: { oldVal: task.assignees, newVal: validAssignees },
+          type: 'UNASSIGNED',
+          targetUser: uId,
+          details: { userId: uId, reason: 'Unassigned from task' },
         });
+      }
+
+      for (const uId of addedUserIds) {
+        logsToCreate.push({
+          task: task._id,
+          actor: req.user._id,
+          type: 'ASSIGNED',
+          targetUser: uId,
+          details: { userId: uId },
+        });
+      }
+
+      if (addedUserIds.length > 0 || removedUserIds.length > 0) {
+        task.assignees = validAssignees;
       }
     }
 
-    // Other field updates
-    if (title && title.trim() !== task.title) {
+    // Field updates with oldValue and newValue validation
+    if (title !== undefined && title.trim() !== task.title) {
       logsToCreate.push({
         task: task._id,
         actor: req.user._id,
-        type: 'FIELD_UPDATE',
-        details: { field: 'title', oldVal: task.title, newVal: title.trim() },
+        type: 'FIELD_CHANGE',
+        field: 'title',
+        oldValue: task.title,
+        newValue: title.trim(),
+        details: { field: 'title', oldValue: task.title, newValue: title.trim() },
       });
       task.title = title.trim();
     }
 
-    if (description !== undefined && description !== task.description) {
+    if (description !== undefined && (description || '') !== (task.description || '')) {
       logsToCreate.push({
         task: task._id,
         actor: req.user._id,
-        type: 'FIELD_UPDATE',
-        details: { field: 'description', oldVal: task.description, newVal: description },
+        type: 'FIELD_CHANGE',
+        field: 'description',
+        oldValue: task.description || '',
+        newValue: description || '',
+        details: { field: 'description', oldValue: task.description || '', newValue: description || '' },
       });
       task.description = description;
     }
 
-    if (priority && priority !== task.priority) {
+    if (priority !== undefined && priority !== task.priority) {
       logsToCreate.push({
         task: task._id,
         actor: req.user._id,
-        type: 'FIELD_UPDATE',
-        details: { field: 'priority', oldVal: task.priority, newVal: priority },
+        type: 'FIELD_CHANGE',
+        field: 'priority',
+        oldValue: task.priority,
+        newValue: priority,
+        details: { field: 'priority', oldValue: task.priority, newValue: priority },
       });
       task.priority = priority;
     }
@@ -363,14 +397,18 @@ router.put('/:id', authMiddleware, async (req, res) => {
         }
       }
 
-      const newDate = dueDate ? new Date(dueDate).toISOString() : null;
-      const oldDate = task.dueDate ? new Date(task.dueDate).toISOString() : null;
-      if (newDate !== oldDate) {
+      const newDateStr = dueDate ? new Date(dueDate).toISOString().split('T')[0] : null;
+      const oldDateStr = task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : null;
+
+      if (newDateStr !== oldDateStr) {
         logsToCreate.push({
           task: task._id,
           actor: req.user._id,
-          type: 'FIELD_UPDATE',
-          details: { field: 'dueDate', oldVal: oldDate, newVal: newDate },
+          type: 'FIELD_CHANGE',
+          field: 'dueDate',
+          oldValue: oldDateStr,
+          newValue: newDateStr,
+          details: { field: 'dueDate', oldValue: oldDateStr, newValue: newDateStr },
         });
         task.dueDate = dueDate ? new Date(dueDate) : null;
       }
@@ -425,7 +463,7 @@ router.delete('/:id', authMiddleware, requireRole('MANAGER'), async (req, res) =
   }
 });
 
-// POST /api/tasks/:id/comments - Add immutable comment (Requirement 9)
+// POST /api/tasks/:id/comments - Add immutable comment
 router.post('/:id/comments', authMiddleware, async (req, res) => {
   try {
     const { comment } = req.body;
@@ -445,7 +483,9 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
       comment: comment.trim(),
     });
 
-    const populatedLog = await ActivityLog.findById(log._id).populate('actor', 'name email avatarUrl role');
+    const populatedLog = await ActivityLog.findById(log._id)
+      .populate('actor', 'name email avatarUrl role')
+      .populate('targetUser', 'name email avatarUrl role');
 
     return res.status(201).json(populatedLog);
   } catch (err) {
@@ -454,7 +494,7 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/tasks/bulk - Bulk action runner (Requirement 7)
+// POST /api/tasks/bulk - Bulk action runner
 router.post('/bulk', authMiddleware, async (req, res) => {
   try {
     const { taskIds, action, payload } = req.body;
@@ -518,22 +558,49 @@ router.post('/bulk', authMiddleware, async (req, res) => {
             task: task._id,
             actor: req.user._id,
             type: 'STATUS_CHANGE',
-            details: { oldVal: oldStatus, newVal: targetStatus, bulk: true },
+            oldValue: oldStatus,
+            newValue: targetStatus,
+            details: { oldValue: oldStatus, newValue: targetStatus },
+            metadata: { bulk: true },
           });
 
           results.push({ taskId: id, success: true });
         } else if (action === 'UPDATE_ASSIGNEES') {
           const { assignees } = payload;
           const validAssignees = (assignees || []).filter((aId) => projectMemberIds.includes(aId.toString()));
-          task.assignees = validAssignees;
-          await task.save();
+          
+          const oldAssigneeIds = task.assignees.map((id) => (id._id ? id._id.toString() : id.toString()));
+          const newAssigneeIds = validAssignees.map((id) => id.toString());
 
-          await ActivityLog.create({
-            task: task._id,
-            actor: req.user._id,
-            type: 'ASSIGNMENT_CHANGE',
-            details: { newVal: validAssignees, bulk: true },
-          });
+          const addedUserIds = newAssigneeIds.filter((id) => !oldAssigneeIds.includes(id));
+          const removedUserIds = oldAssigneeIds.filter((id) => !oldAssigneeIds.includes(id));
+
+          for (const uId of removedUserIds) {
+            await ActivityLog.create({
+              task: task._id,
+              actor: req.user._id,
+              type: 'UNASSIGNED',
+              targetUser: uId,
+              details: { userId: uId, reason: 'Bulk unassignment' },
+              metadata: { bulk: true },
+            });
+          }
+
+          for (const uId of addedUserIds) {
+            await ActivityLog.create({
+              task: task._id,
+              actor: req.user._id,
+              type: 'ASSIGNED',
+              targetUser: uId,
+              details: { userId: uId },
+              metadata: { bulk: true },
+            });
+          }
+
+          if (addedUserIds.length > 0 || removedUserIds.length > 0) {
+            task.assignees = validAssignees;
+            await task.save();
+          }
 
           results.push({ taskId: id, success: true });
         } else if (action === 'UPDATE_DUE_DATE') {
@@ -548,16 +615,24 @@ router.post('/bulk', authMiddleware, async (req, res) => {
             }
           }
 
-          const newDate = dueDate ? new Date(dueDate) : null;
-          task.dueDate = newDate;
-          await task.save();
+          const newDateStr = dueDate ? new Date(dueDate).toISOString().split('T')[0] : null;
+          const oldDateStr = task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : null;
 
-          await ActivityLog.create({
-            task: task._id,
-            actor: req.user._id,
-            type: 'FIELD_UPDATE',
-            details: { field: 'dueDate', newVal: newDate, bulk: true },
-          });
+          if (newDateStr !== oldDateStr) {
+            task.dueDate = dueDate ? new Date(dueDate) : null;
+            await task.save();
+
+            await ActivityLog.create({
+              task: task._id,
+              actor: req.user._id,
+              type: 'FIELD_CHANGE',
+              field: 'dueDate',
+              oldValue: oldDateStr,
+              newValue: newDateStr,
+              details: { field: 'dueDate', oldValue: oldDateStr, newValue: newDateStr },
+              metadata: { bulk: true },
+            });
+          }
 
           results.push({ taskId: id, success: true });
         }

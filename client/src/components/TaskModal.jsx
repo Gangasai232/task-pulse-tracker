@@ -387,21 +387,108 @@ export const TaskModal = ({ taskId, onClose, onTaskUpdated }) => {
               <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
                 {task.timeline && task.timeline.length > 0 ? (
                   task.timeline.map((item) => (
-                    <div key={item._id} className="p-3 rounded-xl bg-slate-900/40 border border-slate-800/80 text-xs space-y-1">
+                    <div key={item._id} className="p-3 rounded-xl bg-slate-900/40 border border-slate-800/80 text-xs space-y-1.5">
                       <div className="flex items-center justify-between text-slate-400">
-                        <span className="font-semibold text-slate-300">{item.actor?.name || 'System User'}</span>
-                        <span className="text-[10px]">{new Date(item.createdAt).toLocaleString()}</span>
+                        <span className="font-semibold text-slate-300 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                          {item.actor?.name || 'System User'}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </span>
                       </div>
-                      {item.type === 'COMMENT' ? (
-                        <p className="text-slate-200 italic bg-slate-950/50 p-2 rounded-lg border border-slate-800/60">
-                          "{item.comment}"
-                        </p>
-                      ) : (
-                        <p className="text-slate-400 font-mono">
-                          Action: <span className="text-indigo-400">{item.type}</span>{' '}
-                          {item.details && JSON.stringify(item.details)}
-                        </p>
-                      )}
+
+                      {/* Render Human Readable Event Details */}
+                      {(() => {
+                        const isBulk = item.metadata?.bulk || item.details?.bulk;
+
+                        if (item.type === 'COMMENT') {
+                          return (
+                            <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 text-slate-200 text-xs">
+                              <span className="text-slate-400 font-medium block mb-1">Left a comment:</span>
+                              <p className="italic font-sans text-slate-100">"{item.comment}"</p>
+                            </div>
+                          );
+                        }
+
+                        if (item.type === 'CREATED') {
+                          return (
+                            <p className="text-slate-300">
+                              Created task{' '}
+                              <span className="text-indigo-400 font-medium font-mono">
+                                ({item.oldValue?.title || item.details?.title || 'Task Created'})
+                              </span>
+                            </p>
+                          );
+                        }
+
+                        if (item.type === 'STATUS_CHANGE') {
+                          const oldVal = item.oldValue || item.details?.oldValue || item.details?.oldVal;
+                          const newVal = item.newValue || item.details?.newValue || item.details?.newVal;
+                          return (
+                            <div className="flex items-center gap-2 flex-wrap text-slate-300">
+                              <span>Moved status from</span>
+                              <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[11px] border border-slate-700">{oldVal}</span>
+                              <span>to</span>
+                              <span className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 font-mono text-[11px] border border-indigo-800 font-semibold">{newVal}</span>
+                              {isBulk && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800/60 font-mono">
+                                  [Bulk Action]
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        if (item.type === 'FIELD_CHANGE' || item.type === 'FIELD_UPDATE') {
+                          const fieldName = item.field || item.details?.field || 'field';
+                          const oldVal = item.oldValue !== undefined ? item.oldValue : item.details?.oldValue || item.details?.oldVal;
+                          const newVal = item.newValue !== undefined ? item.newValue : item.details?.newValue || item.details?.newVal;
+                          return (
+                            <div className="flex items-center gap-1.5 flex-wrap text-slate-300">
+                              <span>Updated <strong className="text-slate-200 capitalize">{fieldName}</strong>:</span>
+                              <span className="line-through text-slate-500 font-mono">{String(oldVal || 'None')}</span>
+                              <span className="text-slate-400">→</span>
+                              <span className="text-indigo-300 font-medium font-mono">{String(newVal || 'None')}</span>
+                              {isBulk && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800/60 font-mono">
+                                  [Bulk Action]
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        if (item.type === 'ASSIGNED') {
+                          const targetName = item.targetUser?.name || item.details?.targetUser?.name || item.details?.userId || 'User';
+                          return (
+                            <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                              <span>Assigned task to</span>
+                              <span className="bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800 font-semibold text-[11px]">{targetName}</span>
+                              {isBulk && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800/60 font-mono">[Bulk Action]</span>}
+                            </div>
+                          );
+                        }
+
+                        if (item.type === 'UNASSIGNED') {
+                          const targetName = item.targetUser?.name || item.details?.targetUser?.name || item.details?.userId || 'User';
+                          const reason = item.details?.reason ? ` (${item.details.reason})` : '';
+                          return (
+                            <div className="flex items-center gap-1.5 text-rose-400 font-medium">
+                              <span>Unassigned</span>
+                              <span className="bg-rose-950/80 text-rose-300 px-2 py-0.5 rounded border border-rose-800 font-semibold text-[11px]">{targetName}</span>
+                              {reason && <span className="text-slate-400 text-[11px] italic">{reason}</span>}
+                              {isBulk && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800/60 font-mono">[Bulk Action]</span>}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <p className="text-slate-400 font-mono text-[11px]">
+                            Action: <span className="text-indigo-400">{item.type}</span> {item.details && JSON.stringify(item.details)}
+                          </p>
+                        );
+                      })()}
                     </div>
                   ))
                 ) : (

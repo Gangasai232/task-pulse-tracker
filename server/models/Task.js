@@ -69,4 +69,17 @@ taskSchema.virtual('taskKey').get(function () {
 taskSchema.set('toJSON', { virtuals: true });
 taskSchema.set('toObject', { virtuals: true });
 
+// Clear prior alert dismissals if dueDate, status, or assignees are modified
+taskSchema.pre('save', async function (next) {
+  if (this.isModified('dueDate') || this.isModified('status') || this.isModified('assignees')) {
+    try {
+      const AlertDismissal = mongoose.model('AlertDismissal');
+      await AlertDismissal.deleteMany({ task: this._id });
+    } catch (err) {
+      // Model might not be registered yet
+    }
+  }
+  next();
+});
+
 module.exports = mongoose.model('Task', taskSchema);

@@ -64,12 +64,16 @@ export const DashboardPage = () => {
 
   if (!stats) return null;
 
-  const headline = stats?.headline || {};
-  const statusBreakdown = Array.isArray(stats?.statusBreakdown) ? stats.statusBreakdown : [];
-  const assigneeBreakdown = Array.isArray(stats?.assigneeBreakdown) ? stats.assigneeBreakdown : [];
-  const weeklyCompletions = Array.isArray(stats?.weeklyCompletions) ? stats.weeklyCompletions : [];
+  const openTasks = stats?.openTasks ?? stats?.headline?.openTasks ?? 0;
+  const overdueTasks = stats?.overdueTasks ?? stats?.headline?.overdueTasks ?? 0;
+  const dueThisWeek = stats?.dueThisWeek ?? stats?.headline?.dueThisWeek ?? 0;
+  const completedThisWeek = stats?.completedThisWeek ?? stats?.headline?.completedThisWeek ?? 0;
 
-  const maxAssigneeCount = Math.max(...(assigneeBreakdown.map((a) => a?.count || 0) || [1]), 1);
+  const tasksByStatus = Array.isArray(stats?.tasksByStatus) ? stats.tasksByStatus : Array.isArray(stats?.statusBreakdown) ? stats.statusBreakdown : [];
+  const tasksByAssignee = Array.isArray(stats?.tasksByAssignee) ? stats.tasksByAssignee : Array.isArray(stats?.assigneeBreakdown) ? stats.assigneeBreakdown : [];
+  const completionsLast8Weeks = Array.isArray(stats?.completionsLast8Weeks) ? stats.completionsLast8Weeks : Array.isArray(stats?.weeklyCompletions) ? stats.weeklyCompletions : [];
+
+  const maxAssigneeCount = Math.max(...(tasksByAssignee.map((a) => a?.count || 0) || [1]), 1);
 
   return (
     <div className="space-y-6">
@@ -99,12 +103,12 @@ export const DashboardPage = () => {
         </div>
       </div>
 
-      {/* KPI Headline Cards */}
+      {/* Primary 4 KPI Headline Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-panel p-5 rounded-xl border border-slate-800 border-t-2 border-t-blue-500 flex items-center justify-between shadow-sm">
           <div>
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">Open Tasks</div>
-            <div className="text-3xl font-extrabold text-slate-100 mt-1">{headline?.openTasks || 0}</div>
+            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">OPEN TASKS</div>
+            <div className="text-3xl font-extrabold text-slate-100 mt-1">{openTasks}</div>
           </div>
           <div className="p-3 rounded-lg bg-blue-950/50 text-blue-400 border border-blue-900">
             <Clock className="w-5 h-5" />
@@ -113,8 +117,8 @@ export const DashboardPage = () => {
 
         <div className="glass-panel p-5 rounded-xl border border-slate-800 border-t-2 border-t-rose-500 flex items-center justify-between shadow-sm">
           <div>
-            <div className="text-xs font-medium text-rose-400 uppercase tracking-wider">Overdue Tasks</div>
-            <div className="text-3xl font-extrabold text-rose-300 mt-1">{headline?.overdueTasks || 0}</div>
+            <div className="text-xs font-medium text-rose-400 uppercase tracking-wider">OVERDUE TASKS</div>
+            <div className="text-3xl font-extrabold text-rose-300 mt-1">{overdueTasks}</div>
           </div>
           <div className="p-3 rounded-lg bg-rose-950/50 text-rose-400 border border-rose-900">
             <AlertTriangle className="w-5 h-5" />
@@ -123,8 +127,8 @@ export const DashboardPage = () => {
 
         <div className="glass-panel p-5 rounded-xl border border-slate-800 border-t-2 border-t-purple-500 flex items-center justify-between shadow-sm">
           <div>
-            <div className="text-xs font-medium text-purple-400 uppercase tracking-wider">Due This Week</div>
-            <div className="text-3xl font-extrabold text-purple-300 mt-1">{headline?.dueThisWeek || 0}</div>
+            <div className="text-xs font-medium text-purple-400 uppercase tracking-wider">DUE THIS WEEK</div>
+            <div className="text-3xl font-extrabold text-purple-300 mt-1">{dueThisWeek}</div>
           </div>
           <div className="p-3 rounded-lg bg-purple-950/50 text-purple-400 border border-purple-900">
             <Calendar className="w-5 h-5" />
@@ -133,8 +137,8 @@ export const DashboardPage = () => {
 
         <div className="glass-panel p-5 rounded-xl border border-slate-800 border-t-2 border-t-emerald-500 flex items-center justify-between shadow-sm">
           <div>
-            <div className="text-xs font-medium text-emerald-400 uppercase tracking-wider">Completed This Week</div>
-            <div className="text-3xl font-extrabold text-emerald-300 mt-1">{headline?.completedThisWeek || 0}</div>
+            <div className="text-xs font-medium text-emerald-400 uppercase tracking-wider">COMPLETED THIS WEEK</div>
+            <div className="text-3xl font-extrabold text-emerald-300 mt-1">{completedThisWeek}</div>
           </div>
           <div className="p-3 rounded-lg bg-emerald-950/50 text-emerald-400 border border-emerald-900">
             <CheckCircle2 className="w-5 h-5" />
@@ -156,7 +160,7 @@ export const DashboardPage = () => {
 
           <div className="w-full pt-2 min-h-[250px]">
             <ResponsiveContainer width="100%" height={240}>
-              <AreaChart data={weeklyCompletions}>
+              <AreaChart data={completionsLast8Weeks}>
                 <defs>
                   <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
@@ -180,7 +184,7 @@ export const DashboardPage = () => {
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div className="flex items-center gap-2">
               <PieChartIcon className="w-4 h-4 text-purple-400" />
-              <h3 className="font-semibold text-sm text-slate-100">Status Distribution</h3>
+              <h3 className="font-semibold text-sm text-slate-100">Tasks by Status</h3>
             </div>
           </div>
 
@@ -188,7 +192,7 @@ export const DashboardPage = () => {
             <ResponsiveContainer width="100%" height={190}>
               <PieChart>
                 <Pie
-                  data={statusBreakdown}
+                  data={tasksByStatus}
                   dataKey="count"
                   nameKey="status"
                   cx="50%"
@@ -197,7 +201,7 @@ export const DashboardPage = () => {
                   outerRadius={70}
                   paddingAngle={3}
                 >
-                  {statusBreakdown.map((entry) => (
+                  {tasksByStatus.map((entry) => (
                     <Cell key={entry?.status || Math.random()} fill={STATUS_COLORS[entry?.status] || '#64748b'} />
                   ))}
                 </Pie>
@@ -210,7 +214,7 @@ export const DashboardPage = () => {
 
           {/* Status Breakdown Legend */}
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-[11px]">
-            {statusBreakdown.map((item) => (
+            {tasksByStatus.map((item) => (
               <div key={item?.status || Math.random()} className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_COLORS[item?.status] || '#64748b' }}></span>
                 <span className="text-slate-400 capitalize">{(item?.status || '').replace('_', ' ').toLowerCase()}:</span>
@@ -221,19 +225,19 @@ export const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Team Workload Breakdown - Scrollable Responsive Row Layout for Any Team Size */}
+      {/* Tasks by Assignee - Scrollable Responsive Bar Layout for Any Team Size */}
       <div className="glass-panel p-6 rounded-xl border border-slate-800 space-y-4 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-emerald-400" />
-            <h3 className="font-semibold text-sm text-slate-100">Assignee Workload Breakdown</h3>
+            <h3 className="font-semibold text-sm text-slate-100">Tasks by Assignee</h3>
           </div>
-          <span className="text-[11px] text-slate-400 font-mono">{assigneeBreakdown.length} Members Tracked</span>
+          <span className="text-[11px] text-slate-400 font-mono">{tasksByAssignee.length} Tracked</span>
         </div>
 
         <div className="space-y-3.5 max-h-72 overflow-y-auto pr-2">
-          {assigneeBreakdown.length > 0 ? (
-            assigneeBreakdown.map((assignee) => {
+          {tasksByAssignee.length > 0 ? (
+            tasksByAssignee.map((assignee) => {
               const count = assignee?.count || 0;
               const name = assignee?.name || 'Unassigned';
               const pct = Math.round((count / maxAssigneeCount) * 100);
