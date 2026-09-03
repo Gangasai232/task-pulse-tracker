@@ -24,18 +24,20 @@ export const AllTasksPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  // Filters & Query state (Requirement 6)
+  // Filters & Query state
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [projectId, setProjectId] = useState('');
   const [status, setStatus] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
   const [priority, setPriority] = useState('');
-  const [isOverdue, setIsOverdue] = useState(false);
+  const [overdueFilter, setOverdueFilter] = useState('');
   const [sortBy, setSortBy] = useState('updatedAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
+  const limit = 20;
 
-  // Multi-select state (Requirement 7)
+  // Multi-select state
   const [selectedTaskIds, setSelectedTaskIds] = useState([]);
 
   // Data sources for dropdown filter options
@@ -44,6 +46,14 @@ export const AllTasksPage = () => {
 
   // Detail Modal
   const [activeTaskId, setActiveTaskId] = useState(null);
+
+  // Debounce search input by 300ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   useEffect(() => {
     const fetchDropdownOptions = async () => {
@@ -62,22 +72,22 @@ export const AllTasksPage = () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
-        search,
+        search: debouncedSearch,
         projectId,
         status,
-        assigneeId: isManager ? assigneeId : (user?._id || ''),
+        assigneeId,
         priority,
-        isOverdue: isOverdue ? 'true' : 'false',
+        overdue: overdueFilter,
         sortBy,
         sortOrder,
         page: page.toString(),
-        limit: '10',
+        limit: limit.toString(),
       });
 
       const res = await api.get(`/tasks?${queryParams.toString()}`);
       setTasks(res.tasks || []);
-      setTotal(res.total || 0);
-      setTotalPages(res.totalPages || 1);
+      setTotal(res.total ?? res.pagination?.total ?? 0);
+      setTotalPages(res.totalPages ?? res.pagination?.totalPages ?? 1);
     } catch (err) {
       console.error('Failed to load tasks:', err);
     } finally {
@@ -87,7 +97,7 @@ export const AllTasksPage = () => {
 
   useEffect(() => {
     loadTasks();
-  }, [search, projectId, status, assigneeId, priority, isOverdue, sortBy, sortOrder, page]);
+  }, [debouncedSearch, projectId, status, assigneeId, priority, overdueFilter, sortBy, sortOrder, page]);
 
   // Toggle single task checkbox selection
   const toggleSelectTask = (taskId) => {
@@ -107,7 +117,7 @@ export const AllTasksPage = () => {
     }
   };
 
-  // CSV Export (Requirement 7)
+  // CSV Export
   const handleExportCSV = () => {
     if (tasks.length === 0) return alert('No tasks available to export.');
 
@@ -138,8 +148,8 @@ export const AllTasksPage = () => {
       {/* Header & Export */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold text-slate-100">Cross-Project Tasks & Search</h1>
-          <p className="text-xs text-slate-400">Server-side filtering, sorting, pagination, bulk operations, and CSV export</p>
+          <h1 className="font-display text-2xl font-bold text-slate-100">Find & Filter Tasks</h1>
+          <p className="text-xs text-slate-400">Server-side searching, filtering, sorting, pagination, and bulk operations</p>
         </div>
 
         <button
@@ -157,7 +167,7 @@ export const AllTasksPage = () => {
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
           <input
             type="text"
-            placeholder="Server search across task titles and descriptions..."
+            placeholder="Search task title or description on server..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -168,7 +178,7 @@ export const AllTasksPage = () => {
         </div>
 
         {/* Filter Dropdowns Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
           {/* Project Filter */}
           <select
             value={projectId}
@@ -229,11 +239,26 @@ export const AllTasksPage = () => {
             className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 focus:outline-none"
           >
             <option value="">All Assignees</option>
+            <option value="unassigned">Unassigned Tasks</option>
             {users.map((u) => (
               <option key={u._id} value={u._id}>
                 {u.name}
               </option>
             ))}
+          </select>
+
+          {/* Overdue Filter */}
+          <select
+            value={overdueFilter}
+            onChange={(e) => {
+              setOverdueFilter(e.target.value);
+              setPage(1);
+            }}
+            className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 focus:outline-none"
+          >
+            <option value="">All Due Dates</option>
+            <option value="overdue">Overdue Only</option>
+            <option value="not_overdue">Not Overdue</option>
           </select>
 
           {/* Sort Field */}
@@ -248,21 +273,15 @@ export const AllTasksPage = () => {
             <option value="title">Sort: Title</option>
           </select>
 
-          {/* Overdue Checkbox */}
-          <button
-            type="button"
-            onClick={() => {
-              setIsOverdue(!isOverdue);
-              setPage(1);
-            }}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition ${
-              isOverdue
-                ? 'bg-rose-950/80 text-rose-300 border-rose-800'
-                : 'bg-slate-950 text-slate-400 border-slate-800'
-            }`}
+          {/* Sort Order */}
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 focus:outline-none"
           >
-            Overdue Only
-          </button>
+            <option value="desc">Order: Descending</option>
+            <option value="asc">Order: Ascending</option>
+          </select>
         </div>
       </div>
 
@@ -349,8 +368,8 @@ export const AllTasksPage = () => {
         {/* Server Pagination */}
         <div className="p-4 border-t border-slate-800 bg-slate-900/40 flex items-center justify-between text-xs text-slate-400">
           <div>
-            Showing matches <span className="font-semibold text-slate-200">{tasks.length}</span> of{' '}
-            <span className="font-semibold text-slate-200">{total}</span> total
+            Showing <span className="font-semibold text-slate-200">{total === 0 ? 0 : (page - 1) * limit + 1}–{Math.min(page * limit, total)}</span> of{' '}
+            <span className="font-semibold text-slate-200">{total}</span> tasks
           </div>
 
           <div className="flex items-center gap-2">

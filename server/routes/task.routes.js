@@ -21,6 +21,7 @@ router.get('/', authMiddleware, async (req, res) => {
       assigneeId,
       priority,
       isOverdue,
+      overdue,
       myTasksOnly,
       sortBy = 'updatedAt',
       sortOrder = 'desc',
@@ -28,17 +29,17 @@ router.get('/', authMiddleware, async (req, res) => {
       limit = 20,
     } = req.query;
 
-    const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 20;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.max(parseInt(limit, 10) || 20, 1);
     const skip = (pageNum - 1) * limitNum;
 
-    // Determine accessible projects
+    // Determine accessible projects for logged-in user
     let accessibleProjectIds = [];
     if (req.user.role === 'ADMIN') {
       const activeProjects = await Project.find({ archived: false }).select('_id');
       accessibleProjectIds = activeProjects.map((p) => p._id);
     } else {
-      // MANAGER & MEMBER: Only see projects where they are owner OR member
+      // MANAGER & MEMBER: Can view tasks in projects where user is owner or member
       const userProjects = await Project.find({
         archived: false,
         $or: [{ owner: req.user._id }, { members: req.user._id }],
@@ -48,6 +49,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
     const filter = { project: { $in: accessibleProjectIds } };
 
+    // Project filter & Authorization enforcement
     if (projectId) {
       const isAccessible = accessibleProjectIds.some(
         (pId) => pId.toString() === projectId.toString()
@@ -66,62 +68,132 @@ router.get('/', authMiddleware, async (req, res) => {
       filter.priority = priority;
     }
 
-    if (req.user.role !== 'MANAGER' && req.user.role !== 'ADMIN') {
-      // Non-manager members only see tasks assigned to themselves
+    // Assignee filter: specific user ID, unassigned, or my tasks only
+    if (myTasksOnly === 'true') {
       filter.assignees = req.user._id;
-    } else if (assigneeId) {
-      // Managers and Admins can filter by specific assignee
+    } else if (assigneeId === 'unassigned') {
+      filter.$or = [{ assignees: { $exists: false } }, { assignees: { $size: 0 } }];
+    } else if (assigneeId && assigneeId !== 'all') {
       filter.assignees = assigneeId;
     }
 
-    if (isOverdue === 'true') {
-      filter.dueDate = { $lt: new Date() };
+    // Overdue filter
+    const now = new Date();
+    const overdueParam = overdue || (isOverdue === 'true' ? 'overdue' : null);
+
+    if (overdueParam === 'overdue' || overdueParam === 'true') {
+      filter.dueDate = { $lt: now };
       filter.status = { $ne: STATUSES.DONE };
+    } else if (overdueParam === 'not_overdue' || overdueParam === 'false') {
+      filter.$or = [
+        { dueDate: { $gte: now } },
+        { dueDate: null },
+        { status: STATUSES.DONE },
+      ];
     }
 
+    // Server-side Text Search over Title and Description
     if (search && search.trim() !== '') {
-      const regex = new RegExp(search.trim(), 'i');
-      filter.$or = [{ title: regex }, { description: regex }];
+      const cleanSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(cleanSearch, 'i');
+      
+      if (filter.$or) {
+        const existingOr = filter.$or;
+        delete filter.$or;
+        filter.$and = [
+          { $or: existingOr },
+          { $or: [{ title: regex }, { description: regex }] },
+        ];
+      } else {
+        filter.$or = [{ title: regex }, { description: regex }];
+      }
     }
-
-    // Sort order setup
-    const sortFieldMap = {
-      dueDate: 'dueDate',
-      priority: 'priority',
-      updatedAt: 'updatedAt',
-      createdAt: 'createdAt',
-      title: 'title',
-    };
-    const sortField = sortFieldMap[sortBy] || 'updatedAt';
-    const sortDir = sortOrder === 'asc' ? 1 : -1;
 
     const totalMatches = await Task.countDocuments(filter);
+    const totalPages = Math.ceil(totalMatches / limitNum) || 1;
+    const sortDir = sortOrder === 'asc' ? 1 : -1;
 
-    const tasks = await Task.find(filter)
-      .populate('project', 'key name archived')
-      .populate('assignees', 'name email avatarUrl role')
-      .populate('blockingTasks', 'title status taskNum project')
-      .sort({ [sortField]: sortDir })
-      .skip(skip)
-      .limit(limitNum);
+    let tasks = [];
 
-    // Attach legal transitions to each task for UI rendering
+    if (sortBy === 'priority') {
+      // Deterministic priority ordering: URGENT (4) > HIGH (3) > MEDIUM (2) > LOW (1)
+      const pipeline = [
+        { $match: filter },
+        {
+          $addFields: {
+            priorityWeight: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ['$priority', 'URGENT'] }, then: 4 },
+                  { case: { $eq: ['$priority', 'HIGH'] }, then: 3 },
+                  { case: { $eq: ['$priority', 'MEDIUM'] }, then: 2 },
+                  { case: { $eq: ['$priority', 'LOW'] }, then: 1 },
+                ],
+                default: 0,
+              },
+            },
+          },
+        },
+        { $sort: { priorityWeight: sortDir, updatedAt: -1 } },
+        { $skip: skip },
+        { $limit: limitNum },
+      ];
+
+      const rawAggResults = await Task.aggregate(pipeline);
+      const rawIds = rawAggResults.map((r) => r._id);
+
+      const populatedTasks = await Task.find({ _id: { $in: rawIds } })
+        .populate('project', 'key name archived')
+        .populate('assignees', 'name email avatarUrl role')
+        .populate('blockingTasks', 'title status taskNum project');
+
+      // Preserve aggregation sort order
+      tasks = rawIds
+        .map((id) => populatedTasks.find((t) => t._id.toString() === id.toString()))
+        .filter(Boolean);
+    } else {
+      const sortFieldMap = {
+        dueDate: 'dueDate',
+        updatedAt: 'updatedAt',
+        createdAt: 'createdAt',
+        title: 'title',
+      };
+      const sortField = sortFieldMap[sortBy] || 'updatedAt';
+
+      tasks = await Task.find(filter)
+        .populate('project', 'key name archived')
+        .populate('assignees', 'name email avatarUrl role')
+        .populate('blockingTasks', 'title status taskNum project')
+        .sort({ [sortField]: sortDir })
+        .skip(skip)
+        .limit(limitNum);
+    }
+
+    // Attach legal transitions to each task object
     const formattedTasks = tasks.map((t) => {
       const taskObj = t.toObject();
       taskObj.legalTransitions = getLegalTransitions(t.status, t.previousStatus);
       return taskObj;
     });
 
+    const paginationMeta = {
+      page: pageNum,
+      limit: limitNum,
+      total: totalMatches,
+      totalPages: totalPages,
+    };
+
     return res.json({
       tasks: formattedTasks,
       total: totalMatches,
       page: pageNum,
       limit: limitNum,
-      totalPages: Math.ceil(totalMatches / limitNum),
+      totalPages: totalPages,
+      pagination: paginationMeta,
     });
   } catch (err) {
     console.error('Fetch tasks error:', err);
-    return res.status(500).json({ error: 'Failed to fetch tasks.' });
+    return res.status(500).json({ error: 'Failed to fetch tasks: ' + err.message });
   }
 });
 
