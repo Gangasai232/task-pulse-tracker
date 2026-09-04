@@ -49,6 +49,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Serve client static build files & SPA fallback if client/dist exists
+const clientDistPath = path.join(__dirname, '../client/dist');
+if (require('fs').existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(clientDistPath, 'index.html'));
+    }
+  });
+}
+
 // Start Server
 const startServer = async () => {
   try {
