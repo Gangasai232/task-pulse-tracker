@@ -1,38 +1,33 @@
-# Architectural & Technical Decisions
+# Key Design Decisions
 
-Here are 5 key technical decisions made during the design and development of TaskPulse, including one decision that was later reversed based on testing feedback:
-
----
-
-## Decision 1: Server-Side State Machine vs. Frontend Transition Logic
-- **Choice:** Built a centralized server-side state machine engine (`server/utils/stateMachine.js`) that validates all status transitions and blocking task dependencies before updating MongoDB.
-- **Rejected:** Validating transitions exclusively in React component state.
-- **Rationale:** Frontend-only checks can be bypassed by direct API calls or stale browser states. Enforcing state transitions on the server guarantees complete lifecycle integrity regardless of API client.
+Here are 5 key technical choices and trade-offs I made while building TaskPulse, including one decision I changed my mind about during development.
 
 ---
 
-## Decision 2: In-Memory MongoDB Fallback (`mongodb-memory-server`) for Zero-Config Local Development
-- **Choice:** Configured `server/config/db.js` to automatically instantiate an in-memory MongoDB instance if `MONGODB_URI` environment variable is not present.
-- **Rejected:** Mandating a local MongoDB installation or cloud connection string for development setup.
-- **Rationale:** Evaluators and team members can clone the repository and run `npm run dev` instantly without needing local database software or external cloud configuration.
+## 1. Validating Task Rules on the Server (Not just Frontend)
+- **What I chose:** I wrote a server-side state machine helper (`server/utils/stateMachine.js`) that checks all status transitions and blocking dependency rules before saving changes to MongoDB.
+- **Why:** If I only checked status rules in React, someone could bypass the rules using direct API requests or Postman. Putting the validation on the backend ensures task lifecycle rules (`BACKLOG` → `IN_PROGRESS` → `IN_REVIEW` → `DONE`, and `BLOCKED`) are always enforced.
 
 ---
 
-## Decision 3: Alert Dismissal Expiry Model based on Task Due Date Snapshot
-- **Choice:** Created an `AlertDismissal` model storing `dismissedAtDueDate` (the task's due date at time of dismissal). If the task's due date is subsequently modified by a manager or assignee, the dismissal condition (`task.dueDate === dismissedAtDueDate`) evaluates to false, causing the alert to automatically reappear.
-- **Rejected:** Simple boolean `isDismissed` flag on the Task document.
-- **Rationale:** A simple boolean flag would permanently suppress alerts even if a manager extended or altered an overdue task's deadline, violating Requirement 10.
+## 2. In-Memory MongoDB Fallback for Quick Local Testing
+- **What I chose:** I configured `server/config/db.js` so that if `MONGODB_URI` is not set in `.env`, the server automatically starts an in-memory MongoDB database (`mongodb-memory-server`).
+- **Why:** Anyone cloning the repository can run `npm start` immediately without needing to set up a local MongoDB installation or cloud database credentials beforehand.
 
 ---
 
-## Decision 4: Per-Task Itemized Reporting for Bulk Operations
-- **Choice:** Endpoint `/api/tasks/bulk` iterates through requested task updates, evaluating permissions and state machine rules per task, and returns `{ results: [{ taskId, success: true|false, error }] }`.
-- **Rejected:** Atomic database transaction (`all-or-nothing`) bulk updates.
-- **Rationale:** Requirement 7 explicitly dictates that if a user selects 5 tasks for a bulk status change and 1 task is blocked by an unfinished dependency, the valid 4 tasks must succeed while returning an itemized rejection reason for the 1 blocked task.
+## 3. How Overdue Alert Dismissals Work
+- **What I chose:** Instead of using a simple `isDismissed = true` boolean flag, I created an `AlertDismissal` model that saves the exact due date at the time the user dismissed the alert (`dismissedAtDueDate`).
+- **Why:** If a manager changes the due date on an overdue task later, a simple boolean flag would keep the alert hidden forever. By comparing due date timestamps, the alert automatically reappears if the due date is modified.
 
 ---
 
-## Decision 5 (Reversed Decision): Soft Deletions vs. Hard Deletions with Timeline Cascade Cleanup
-- **Initial Choice:** Initially implemented soft deletion on Tasks via a `deleted: true` flag.
-- **Reversal:** Switched to explicit hard deletion (`Task.findByIdAndDelete()`) combined with automatic cleanup of blocking task references (`$pull: { blockingTasks: taskId }`) and activity logs.
-- **Rationale:** Soft-deleted tasks cluttered search indexes and pagination count calculations, complicating cross-project total count metrics. Hard deletion with reference cleanup simplified queries while remaining strictly under Manager-only RBAC controls.
+## 4. Itemized Pass/Fail Results for Bulk Task Actions
+- **What I chose:** In `/api/tasks/bulk`, the server processes selected tasks one by one in a loop, runs state machine checks on each, and returns a structured result array (`[{ taskId, success, error }]`).
+- **Why:** If a user selects 5 tasks for a bulk status update and 1 task is blocked by an unfinished dependency, the 4 valid tasks still succeed while displaying a clear error message for the 1 blocked task in the UI modal.
+
+---
+
+## 5. Decision I Changed: Hard Deletes with Reference Cleanup (Replaced Soft Deletes)
+- **First approach:** Originally, I considered using soft deletes (`deleted: true`) for tasks.
+- **Why I changed it:** Soft-deleted tasks complicated pagination metrics, text search, and total count calculations in MongoDB queries. I switched to explicit hard deletes (`Task.findByIdAndDelete()`) while automatically cleaning up any references in `blockingTasks` arrays and `ActivityLog` entries.

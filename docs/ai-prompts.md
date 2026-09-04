@@ -1,35 +1,20 @@
 # AI Prompts & Workflow Log
 
-This document records the prompt sequence used with Antigravity AI to plan, scaffold, implement, and refine the TaskPulse application.
-
----
-
-## 1. System Planning & Architecture Prompt
-- **Prompt:**
-  > "Review the task tracker requirements in README.md. Generate an implementation plan using the MERN stack with MongoDB schemas, state machine transition rules, audit log schema, and step-by-step implementation milestones."
-- **Outcome:** Created structured design plan covering 10 functional requirements and documentation stubs.
-
----
-
-## 2. Backend & State Machine Generation Prompt
-- **Prompt:**
-  > "Create the Express server, Mongoose models (User, Project, Task, ActivityLog, AlertDismissal), and stateMachine.js utility enforcing lifecycle transitions (Backlog -> In Progress -> In Review -> Done, Blocked) and blocking task checks."
-- **Outcome:** Successfully scaffolded database schemas and server validation rules.
-
----
-
-## 3. Prompt with Initial Bad Output & Correction (Reversal Example)
-- **Initial Prompt:**
-  > "Implement bulk task updates using Mongoose `updateMany()` for maximum performance."
-- **Issue Discovered:**
-  > Using `updateMany()` updated all tasks atomically, bypassing individual task state machine checks and failing to return itemized pass/fail reports per task (violating Requirement 7).
-- **Correction Prompt:**
-  > "Refactor `/api/tasks/bulk` to process tasks individually in a loop, running `validateStatusTransition` and `checkUnfinishedBlockingTasks` per item, and return a structured array of `{ taskId, success, error }` results."
-- **Outcome:** Corrected implementation to provide detailed per-task pass/fail outcome reporting.
-
----
-
-## 4. React UI & Glassmorphism Design Prompt
-- **Prompt:**
-  > "Build Vite React components with a modern dark-mode glassmorphism design system. Include Navbar with overdue alert counter, Sidebar, Board/List view toggle, TaskModal with timeline, and AllTasksPage with server pagination."
-- **Outcome:** Produced responsive UI with high visual polish, Recharts graphs, and modal workflows.
+1. "I'm connecting Express to MongoDB Atlas on Windows and getting `querySrv ENOTFOUND`. How do I configure Node `dns.setServers` to use Google/Cloudflare resolvers before Mongoose connects?"
+2. "How do I create a virtual getter `taskKey` in Mongoose that dynamically outputs `MOBILE-1` combining `project.key` and `taskNum`?"
+3. "In my Task schema, I need `assignees` and `blockingTasks` to be arrays of ObjectIds referencing `User` and `Task`. What is the clean Mongoose schema definition?"
+4. "How do I write a JWT auth middleware in Express that attaches the authenticated user to `req.user` and handles invalid tokens gracefully?"
+5. "I need a `requireRole('MANAGER')` permission middleware that enforces role access but also grants full superuser privileges to `ADMIN` accounts. How should I write that?"
+6. "How can I implement a clean state machine matrix function `validateStatusTransition` to validate transitions between `BACKLOG`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, and `BLOCKED`?"
+7. "When a user tries to mark a task as `DONE`, how do I query MongoDB to check if any tasks in its `blockingTasks` array are still unfinished?"
+8. "If a task is marked `BLOCKED`, I need to store its previous status in `previousStatus` so when it's unblocked it returns to its exact previous state. What's the update logic for this?"
+9. "How do I write the auto-increment logic for `taskNum` within a project so each new task gets the next sequential number (`1`, `2`, `3`)?"
+10. "When a manager removes a member from a project's member list, how do I automatically unassign that member from all tasks in that project and create `UNASSIGNED` activity logs?"
+11. "I want an append-only timeline log model that records creation, status transitions, field edits with `oldValue` and `newValue`, assignments, and comments. How should I structure `ActivityLog.js`?"
+12. "How should I structure `AlertDismissal` so if a user dismisses an overdue alert, but the manager changes the task due date later, the alert reappears?"
+13. "Initially I used Mongoose `updateMany` for bulk task updates, but it bypasses state machine checks. How do I rewrite `/api/tasks/bulk` to validate each task in a loop and return itemized `{ taskId, success, error }` results?"
+14. "I want to sort tasks by priority in the deterministic order `URGENT` > `HIGH` > `MEDIUM` > `LOW`. Can I use a Mongoose `$switch` aggregation pipeline for this?"
+15. "How do I write date helpers to calculate calendar week bounds (Monday 00:00 to Sunday 23:59) so I can group completions by 8 consecutive calendar weeks for a Recharts area chart?"
+16. "My route files in `server/routes/` are getting too long. How should I refactor the business logic into a clean MVC structure under `server/controllers/`?"
+17. "When I refresh the browser page on `/admin` or `/projects` after deploying to Vercel, it returns 404 Not Found. How do I fix SPA client-side routing on Vercel and Express?"
+18. "Every time my Node server restarts, my seed function wipes out all registered non-admin users. How do I fix `seedDatabaseIfEmpty` so it only creates the admin user if missing without deleting existing database records?"

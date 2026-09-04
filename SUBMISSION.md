@@ -14,8 +14,11 @@ The server features an automatic in-memory MongoDB fallback when no external dat
 | Role | Email | Password |
 |------|-------|----------|
 | **System Admin** | `admin@acme.com` | `password123` |
-
-*Note: Demo manager/member accounts, projects, and tasks have been cleaned for production deployment. The System Administrator provisions clean Manager and Member accounts directly from the System Admin Portal (`/admin`).*
+| **Manager (Ganga Sai)** | `gangasai@gmail.com` | `12345678` |
+| **Manager (Koushik)** | `koushik@gmail.com` | `12345678` |
+| **Member (Harish)** | `harish@gmail.com` | `12345678` |
+| **Member (Manideep)** | `manideep@gmail.com` | `12345678` |
+| **Member (Vishnu)** | `vishnu@gmail.com` | `12345678` |
 
 ## Stack
 
@@ -45,9 +48,9 @@ The server features an automatic in-memory MongoDB fallback when no external dat
 12 hours total across 4 structured sessions.
 
 ## What would you do next, with another 12 hours?
-1. Implement real-time WebSockets notification stream for instant assignment updates.
-2. Add interactive drag-and-drop animations on the project Kanban board columns using `@hello-pangea/dnd`.
-3. Add multi-level dependency cycle detection across multi-task chains.
+1. Implement real-time task status updates using Socket.io so team members see changes instantly.
+2. Add interactive drag-and-drop task card reordering on the Kanban board.
+3. Add automated email notifications (using Nodemailer) when a task is assigned or becomes overdue.
 
 ## What are you least happy with in this codebase, and why?
 In-memory client-side CSV formatting for very large datasets: while it works seamlessly for filtered queries under pagination limits, server-streaming CSV generation would be more efficient for export datasets over 100,000 tasks.

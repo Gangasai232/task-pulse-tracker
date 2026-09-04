@@ -1,47 +1,46 @@
 # Project Plan & Time Breakdown
 
-## 1. Work Session Breakdown
-
-The project implementation was structured into 4 sequential sessions across a 12-hour budget:
-
-### Session 1: Architecture & Backend Foundation (Estimated: 3h | Actual: 2.5h)
-- Designed MongoDB schemas (`User`, `Project`, `Task`, `ActivityLog`, `AlertDismissal`).
-- Implemented state machine engine (`stateMachine.js`) with illegal status jump validation and blocking dependency validation.
-- Built Express REST endpoints for Auth (JWT + RBAC), Projects, Tasks, and Users.
-
-### Session 2: Advanced Backend APIs & Data Seeding (Estimated: 3h | Actual: 3h)
-- Implemented server-side pagination, regex search, multi-field filtering, and sorting for `/api/tasks`.
-- Built bulk action processing engine returning itemized pass/fail reports (`/api/tasks/bulk`).
-- Built dashboard aggregation metrics and 8-week weekly completion trend statistics (`/api/dashboard/stats`).
-- Implemented overdue alert dismissal logic with automatic re-trigger on due date edits.
-- Wrote automated data seeding script (`scripts/seed.js`) generating realistic multi-project demo dataset.
-
-### Session 3: Modern React UI & State Integration (Estimated: 4h | Actual: 4.5h)
-- Scaffolded Vite + React SPA with dark mode glassmorphism design system in `index.css`.
-- Built reusable UI components: `Navbar` (with overdue alert counter badge), `Sidebar`, `StatusBadge`, `PriorityBadge`.
-- Built `LoginPage` with 1-click Quick Demo Account login buttons.
-- Built `ProjectsPage` with grid view, archive toggle, and project modal.
-- Built `ProjectDetailPage` with Kanban Board vs List View toggle and task creation form.
-- Built `AllTasksPage` with server search/filter bar, pagination controls, CSV export, and `BulkActionBar`.
-- Built `TaskModal` with state machine transition buttons, blocking task indicators, and append-only activity timeline history.
-
-### Session 4: Testing, Verification & Documentation (Estimated: 2h | Actual: 2h)
-- Conducted end-to-end verification of state machine rejection rules, bulk action edge cases, and role restrictions.
-- Authored technical documentation files in `docs/` (`architecture.md`, `schema.md`, `plan.md`, `decisions.md`, `ai-prompts.md`).
-- Completed `SUBMISSION.md`.
+Total Time Spent: **12 hours** across 4 work sessions.
 
 ---
 
-## 2. Order of Building & Rationale
+## 1. Work Sessions & Progress Log
 
-1. **Database Schemas & State Machine First:** Enforcing transition logic on the server before building UI ensured that validation rules could not be bypassed by client state.
-2. **Backend API & Seeding Second:** Having a populated backend allowed immediate visual verification when building React UI components.
-3. **Core Task UI Third:** Building Kanban boards and detail drawers next allowed testing complex task lifecycles visually.
-4. **Search, Bulk Actions & Dashboard Analytics Fourth:** Built once core single-task workflows were stable.
+### Session 1: Setup & Backend Core (2.5 hours)
+- Designed Mongoose models for `User`, `Project`, `Task`, `ActivityLog`, and `AlertDismissal`.
+- Built the task state machine helper (`stateMachine.js`) to handle allowed status steps and check for unfinished blocking dependencies.
+- Created Express API routes for authentication (JWT + roles), project management, user management, and basic task CRUD.
+
+### Session 2: Advanced APIs & Dashboard Metrics (3 hours)
+- Added text search, status/assignee filtering, priority sorting, and pagination to `GET /api/tasks`.
+- Built the bulk action processing endpoint (`/api/tasks/bulk`) to validate tasks in a loop and return itemized pass/fail results.
+- Added dashboard statistics and 8-week completion trend calculations in `/api/dashboard/stats`.
+- Built the overdue alert dismissal logic with due date tracking.
+- Wrote initial database seeding scripts for demo data.
+
+### Session 3: Frontend UI & Components (4.5 hours)
+- Set up the React client using Vite, TailwindCSS, and custom dark glassmorphism styling (`index.css`).
+- Built key UI components: Navbar (with overdue alerts badge), Sidebar, status badges, and priority badges.
+- Created pages: `LoginPage` (with quick demo login buttons), `ProjectsPage`, `ProjectDetailPage` (with Kanban board & list view toggles), `AllTasksPage` (with search, filters, pagination, and bulk action bar), and `AdminConsole`.
+- Created `TaskModal` with state transition buttons, blocking task alerts, and the activity log timeline.
+
+### Session 4: Refactoring, Testing & Documentation (2 hours)
+- Refactored route handlers into dedicated controllers under `server/controllers/`.
+- Fixed deployment routing issues (added `vercel.json` SPA rewrites and server wildcard fallback).
+- Tested state machine edge cases, role permissions, and bulk action error reports.
+- Wrote project documentation (`architecture.md`, `schema.md`, `plan.md`, `decisions.md`, `ai-prompts.md`).
 
 ---
 
-## 3. Scope Cuts & Trade-offs
+## 2. Building Strategy
 
-- **Drag-and-Drop Board Animation:** Drag-and-drop library integration was deferred in favor of clear, explicit "Move to [Status]" buttons that render only legal transitions.
-- **Email Digest:** Replaced with in-app real-time overdue alerts badge counter to avoid third-party SMTP API dependencies.
+1. **Backend First:** Built the database schemas, authentication middleware, and state machine validation on the server before starting the UI so business rules were enforced early.
+2. **Core Task UI Second:** Built the Kanban board, project detail pages, and task modals next so I could test task state transitions visually.
+3. **Search, Bulk Actions & Dashboard Third:** Built search/filtering, bulk action bars, and Recharts dashboard analytics once single-task features were solid.
+
+---
+
+## 3. Trade-offs & Scope Cuts
+
+- **Explicit Buttons over Drag-and-Drop Library:** Used clear "Move to [Status]" buttons (which only show legal state machine steps) instead of a complex drag-and-drop library to prevent accidental illegal transitions.
+- **In-App Overdue Badges over Email Sending:** Used real-time navbar badges and alert modals instead of setting up external SMTP email sending.
