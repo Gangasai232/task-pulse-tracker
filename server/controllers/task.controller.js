@@ -630,13 +630,17 @@ const bulkAction = async (req, res) => {
         }
 
         // Access check
-        const projectMemberIds = task.project.members.map((m) => m.toString());
-        if (
-          req.user.role !== 'MANAGER' &&
-          req.user.role !== 'ADMIN' &&
-          !projectMemberIds.includes(req.user._id.toString())
-        ) {
-          results.push({ taskId: id, success: false, error: 'Access denied to task project.' });
+        const projectMemberIds = task.project && task.project.members ? task.project.members.map((m) => m.toString()) : [];
+        const isManagerOrAdmin = req.user.role === 'MANAGER' || req.user.role === 'ADMIN';
+        const isAssignee = task.assignees.some((id) => (id._id ? id._id.toString() : id.toString()) === req.user._id.toString());
+
+        if (!isManagerOrAdmin && !isAssignee) {
+          results.push({ taskId: id, success: false, error: 'Permission denied. You can only update tasks assigned to you.' });
+          continue;
+        }
+
+        if ((action === 'UPDATE_ASSIGNEES' || action === 'UPDATE_DUE_DATE') && !isManagerOrAdmin) {
+          results.push({ taskId: id, success: false, error: 'Permission denied. Only Managers and Admins can bulk update assignees or due dates.' });
           continue;
         }
 
@@ -679,13 +683,15 @@ const bulkAction = async (req, res) => {
           results.push({ taskId: id, success: true });
         } else if (action === 'UPDATE_ASSIGNEES') {
           const { assignees } = payload;
-          const validAssignees = (assignees || []).filter((aId) => projectMemberIds.includes(aId.toString()));
+          const validAssignees = (assignees || []).filter((aId) =>
+            projectMemberIds.length === 0 || projectMemberIds.includes(aId.toString())
+          );
 
           const oldAssigneeIds = task.assignees.map((id) => (id._id ? id._id.toString() : id.toString()));
           const newAssigneeIds = validAssignees.map((id) => id.toString());
 
           const addedUserIds = newAssigneeIds.filter((id) => !oldAssigneeIds.includes(id));
-          const removedUserIds = oldAssigneeIds.filter((id) => !oldAssigneeIds.includes(id));
+          const removedUserIds = oldAssigneeIds.filter((id) => !newAssigneeIds.includes(id));
 
           for (const uId of removedUserIds) {
             await ActivityLog.create({
@@ -709,10 +715,8 @@ const bulkAction = async (req, res) => {
             });
           }
 
-          if (addedUserIds.length > 0 || removedUserIds.length > 0) {
-            task.assignees = validAssignees;
-            await task.save();
-          }
+          task.assignees = validAssignees;
+          await task.save();
 
           results.push({ taskId: id, success: true });
         } else if (action === 'UPDATE_DUE_DATE') {
