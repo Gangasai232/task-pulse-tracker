@@ -1,0 +1,62 @@
+[
+  {
+    "_id": { "$oid": "66d8e0000000000000000001" },
+    "name": "System Administrator (Admin)",
+    "email": "admin@acme.com",
+    "password": "$2a$10$c.XSYuSRYMWY8VWpOaoW3uVhA.ESxIKTOUqilATj75xDk6lcRyW0K",
+    "role": "ADMIN",
+    "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    "createdAt": { "$date": "2026-08-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-01T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e0000000000000000002" },
+    "name": "Sarah Jenkins",
+    "email": "sarah.jenkins@acme.com",
+    "password": "$2a$10$c.XSYuSRYMWY8VWpOaoW3uVhA.ESxIKTOUqilATj75xDk6lcRyW0K",
+    "role": "MANAGER",
+    "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+    "createdAt": { "$date": "2026-08-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-01T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e0000000000000000003" },
+    "name": "David Chen",
+    "email": "david.chen@acme.com",
+    "password": "$2a$10$c.XSYuSRYMWY8VWpOaoW3uVhA.ESxIKTOUqilATj75xDk6lcRyW0K",
+    "role": "MANAGER",
+    "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+    "createdAt": { "$date": "2026-08-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-01T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e0000000000000000004" },
+    "name": "Alex Rivera",
+    "email": "alex.rivera@acme.com",
+    "password": "$2a$10$c.XSYuSRYMWY8VWpOaoW3uVhA.ESxIKTOUqilATj75xDk6lcRyW0K",
+    "role": "MEMBER",
+    "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+    "createdAt": { "$date": "2026-08-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-01T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e0000000000000000005" },
+    "name": "Priya Sharma",
+    "email": "priya.sharma@acme.com",
+    "password": "$2a$10$c.XSYuSRYMWY8VWpOaoW3uVhA.ESxIKTOUqilATj75xDk6lcRyW0K",
+    "role": "MEMBER",
+    "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    "createdAt": { "$date": "2026-08-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-01T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e0000000000000000006" },
+    "name": "Marcus Vance",
+    "email": "marcus.vance@acme.com",
+    "password": "$2a$10$c.XSYuSRYMWY8VWpOaoW3uVhA.ESxIKTOUqilATj75xDk6lcRyW0K",
+    "role": "MEMBER",
+    "avatarUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150",
+    "createdAt": { "$date": "2026-08-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-01T00:00:00.000Z" }
+  }
+]

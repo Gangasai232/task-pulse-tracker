@@ -1,0 +1,46 @@
+[
+  {
+    "_id": { "$oid": "66d8e1000000000000000001" },
+    "key": "MOBILE",
+    "name": "NextGen Mobile App",
+    "description": "Cross-platform iOS and Android client app revamp featuring dark mode support, offline sync engine, and biometrics login.",
+    "owner": { "$oid": "66d8e0000000000000000002" },
+    "members": [
+      { "$oid": "66d8e0000000000000000002" },
+      { "$oid": "66d8e0000000000000000004" },
+      { "$oid": "66d8e0000000000000000005" }
+    ],
+    "archived": false,
+    "createdAt": { "$date": "2026-08-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-01T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e1000000000000000002" },
+    "key": "PAY",
+    "name": "Payment Gateway Migration",
+    "description": "Upgrading checkout pipeline to support Stripe Elements, Apple Pay, multi-currency auto-conversion, and PCI-DSS compliance checks.",
+    "owner": { "$oid": "66d8e0000000000000000003" },
+    "members": [
+      { "$oid": "66d8e0000000000000000003" },
+      { "$oid": "66d8e0000000000000000005" },
+      { "$oid": "66d8e0000000000000000006" }
+    ],
+    "archived": false,
+    "createdAt": { "$date": "2026-08-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-01T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e1000000000000000003" },
+    "key": "OPS",
+    "name": "Cloud Infrastructure & Monitoring",
+    "description": "Migration to Kubernetes cluster auto-scaling, Prometheus monitoring dashboards, and automated CI/CD deployment pipelines.",
+    "owner": { "$oid": "66d8e0000000000000000003" },
+    "members": [
+      { "$oid": "66d8e0000000000000000003" },
+      { "$oid": "66d8e0000000000000000006" }
+    ],
+    "archived": false,
+    "createdAt": { "$date": "2026-08-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-01T00:00:00.000Z" }
+  }
+]

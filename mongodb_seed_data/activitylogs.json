@@ -1,0 +1,62 @@
+[
+  {
+    "_id": { "$oid": "66d8e3000000000000000001" },
+    "task": { "$oid": "66d8e2000000000000000001" },
+    "actor": { "$oid": "66d8e0000000000000000002" },
+    "type": "CREATED",
+    "details": { "title": "Design User Profile & Settings Wireframes", "priority": "MEDIUM" },
+    "createdAt": { "$date": "2026-08-05T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-05T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e3000000000000000002" },
+    "task": { "$oid": "66d8e2000000000000000001" },
+    "actor": { "$oid": "66d8e0000000000000000004" },
+    "type": "STATUS_CHANGE",
+    "oldValue": "IN_PROGRESS",
+    "newValue": "DONE",
+    "details": { "oldValue": "IN_PROGRESS", "newValue": "DONE" },
+    "createdAt": { "$date": "2026-08-24T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-24T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e3000000000000000003" },
+    "task": { "$oid": "66d8e2000000000000000006" },
+    "actor": { "$oid": "66d8e0000000000000000003" },
+    "type": "CREATED",
+    "details": { "title": "Audit Existing Legacy Stripe Integration", "priority": "HIGH" },
+    "createdAt": { "$date": "2026-08-02T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-02T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e3000000000000000004" },
+    "task": { "$oid": "66d8e2000000000000000006" },
+    "actor": { "$oid": "66d8e0000000000000000005" },
+    "type": "STATUS_CHANGE",
+    "oldValue": "IN_REVIEW",
+    "newValue": "DONE",
+    "details": { "oldValue": "IN_REVIEW", "newValue": "DONE" },
+    "createdAt": { "$date": "2026-08-19T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-19T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e3000000000000000005" },
+    "task": { "$oid": "66d8e2000000000000000010" },
+    "actor": { "$oid": "66d8e0000000000000000003" },
+    "type": "CREATED",
+    "details": { "title": "Setup Grafana & Prometheus Alert Rules", "priority": "MEDIUM" },
+    "createdAt": { "$date": "2026-08-08T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-08T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "66d8e3000000000000000006" },
+    "task": { "$oid": "66d8e2000000000000000010" },
+    "actor": { "$oid": "66d8e0000000000000000006" },
+    "type": "STATUS_CHANGE",
+    "oldValue": "IN_REVIEW",
+    "newValue": "DONE",
+    "details": { "oldValue": "IN_REVIEW", "newValue": "DONE" },
+    "createdAt": { "$date": "2026-08-27T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-08-27T00:00:00.000Z" }
+  }
+]
