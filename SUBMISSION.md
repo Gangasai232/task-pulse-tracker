@@ -5,6 +5,18 @@
 - **GitHub repository:** https://github.com/Gangasai232/task-pulse-tracker
 - **Live application:** https://task-pulse-tracker.vercel.app
 
+## Project Overview
+
+**TaskPulse** is a full-stack project and task tracking platform built for teams managing multiple concurrent projects. It provides a centralized space to manage projects, assign tasks, enforce workflow rules, and monitor team workload.
+
+### Key Capabilities
+- **Role-Based Access Control (RBAC):** Server-enforced permissions distinguishing Admins, Managers, and Members.
+- **Strict Workflow & Dependency Rules:** Server-side state machine (`Backlog` → `In Progress` → `In Review` → `Done`, `Blocked`) that blocks marking tasks as complete if unfinished prerequisite tasks exist.
+- **Role-Scoped Visibility:** Team members see tasks assigned to them across projects, while managers maintain full portfolio visibility.
+- **Bulk Actions & Reporting:** Batch status, assignee, and due date updates with per-item pass/fail diagnostic reports and CSV export.
+- **Immutable Audit Logs:** Append-only timeline tracking creation, field edits, status changes, assignees, and comments.
+- **Dashboard Analytics & Alerts:** Interactive metrics (status distribution, team workload, 8-week completion trends) alongside automated overdue task alerts.
+
 ## Notes for the reviewer
 
 The server features an automatic in-memory MongoDB fallback when no external database URI is configured, allowing immediate full-stack execution out of the box (`npm start` or `npm run dev`). On first boot, the server automatically seeds realistic demo data including projects, tasks, blocking dependencies, overdue tasks, and historical 8-week completions.
