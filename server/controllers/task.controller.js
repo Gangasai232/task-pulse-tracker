@@ -70,13 +70,18 @@ const getTasks = async (req, res) => {
       filter.priority = priority;
     }
 
-    // Assignee filter: specific user ID, unassigned, or my tasks only
-    if (myTasksOnly === 'true') {
+    // MEMBER restriction: Members can strictly ONLY view tasks assigned to them
+    if (req.user.role === 'MEMBER') {
       filter.assignees = req.user._id;
-    } else if (assigneeId === 'unassigned') {
-      filter.$or = [{ assignees: { $exists: false } }, { assignees: { $size: 0 } }];
-    } else if (assigneeId && assigneeId !== 'all') {
-      filter.assignees = assigneeId;
+    } else {
+      // Assignee filter for MANAGER & ADMIN: specific user ID, unassigned, or my tasks only
+      if (myTasksOnly === 'true') {
+        filter.assignees = req.user._id;
+      } else if (assigneeId === 'unassigned') {
+        filter.$or = [{ assignees: { $exists: false } }, { assignees: { $size: 0 } }];
+      } else if (assigneeId && assigneeId !== 'all') {
+        filter.assignees = assigneeId;
+      }
     }
 
     // Overdue filter
@@ -301,6 +306,16 @@ const getTask = async (req, res) => {
 
     if (!task) {
       return res.status(404).json({ error: 'Task not found.' });
+    }
+
+    // Access check for MEMBER role: Members can only view details of tasks assigned to them
+    if (req.user.role === 'MEMBER') {
+      const isAssigned = task.assignees.some(
+        (a) => (a._id ? a._id.toString() : a.toString()) === req.user._id.toString()
+      );
+      if (!isAssigned) {
+        return res.status(403).json({ error: 'Access denied. You are only permitted to view tasks assigned to you.' });
+      }
     }
 
     // Fetch immutable activity log / timeline for this task

@@ -13,7 +13,7 @@ The server features an automatic in-memory MongoDB fallback when no external dat
 
 | Role | Email | Password |
 |------|-------|----------|
-| **System Admin** | `admin@acme.com` | `password123` |
+| **System Admin** | `admin@acme.com` | `12345678` |
 | **Manager (Ganga Sai)** | `gangasai@gmail.com` | `12345678` |
 | **Manager (Koushik)** | `koushik@gmail.com` | `12345678` |
 | **Member (Harish)** | `harish@gmail.com` | `12345678` |

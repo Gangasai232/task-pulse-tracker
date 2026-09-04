@@ -40,6 +40,9 @@ const getStats = async (req, res) => {
     }
 
     const baseFilter = { project: { $in: accessibleProjectIds } };
+    if (req.user.role === 'MEMBER') {
+      baseFilter.assignees = req.user._id;
+    }
     const now = new Date();
 
     // 1. OPEN TASKS: Tasks that are not DONE
