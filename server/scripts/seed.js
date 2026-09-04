@@ -7,13 +7,9 @@ const ActivityLog = require('../models/ActivityLog');
 const AlertDismissal = require('../models/AlertDismissal');
 
 async function seedDatabase() {
-  console.log('Seeding production dataset (Admin account only)...');
-
-  // Clean existing non-admin data
-  await User.deleteMany({ email: { $ne: 'admin@acme.com' } });
-
   const adminExists = await User.findOne({ email: 'admin@acme.com' });
   if (!adminExists) {
+    console.log('Provisioning System Administrator account...');
     const hashedPassword = await bcrypt.hash('password123', 10);
     await User.create({
       name: 'System Administrator (Admin)',
@@ -23,9 +19,8 @@ async function seedDatabase() {
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
       createdAt: new Date(),
     });
+    console.log('Default System Administrator account created (admin@acme.com).');
   }
-
-  console.log('Production seed complete: Only Admin account (admin@acme.com) exists.');
 }
 
 async function seedDatabaseIfEmpty() {
