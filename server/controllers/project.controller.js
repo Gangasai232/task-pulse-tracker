@@ -252,13 +252,30 @@ const deleteProject = async (req, res) => {
     }
 
     // Cascade delete all tasks belonging to this project
-    const projectTasks = await Task.find({ project: project._id }).select('_id');
+    const projectTasks = await Task.find({ project: project._id });
     const taskIds = projectTasks.map((t) => t._id);
+
+    for (const task of projectTasks) {
+      await ActivityLog.create({
+        task: task._id,
+        actor: req.user._id,
+        type: 'DELETED',
+        details: {
+          title: task.title,
+          taskKey: task.taskKey,
+          taskNum: task.taskNum,
+          project: project._id,
+          status: task.status,
+          reason: 'Project deletion cascade',
+        },
+        metadata: { deletedAt: new Date() },
+      });
+    }
 
     await Task.deleteMany({ project: project._id });
 
     if (taskIds.length > 0) {
-      await ActivityLog.deleteMany({ task: { $in: taskIds } });
+      // Clean up alert dismissals but keep ActivityLog entries for immutable history audit
       const AlertDismissal = require('../models/AlertDismissal');
       await AlertDismissal.deleteMany({ task: { $in: taskIds } });
     }

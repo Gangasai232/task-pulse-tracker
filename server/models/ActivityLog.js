@@ -5,7 +5,7 @@ const activityLogSchema = new mongoose.Schema(
     task: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Task',
-      required: true,
+      required: false,
       index: true,
     },
     actor: {
@@ -15,7 +15,7 @@ const activityLogSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['CREATED', 'STATUS_CHANGE', 'FIELD_CHANGE', 'FIELD_UPDATE', 'ASSIGNED', 'UNASSIGNED', 'ASSIGNMENT_CHANGE', 'COMMENT'],
+      enum: ['CREATED', 'STATUS_CHANGE', 'FIELD_CHANGE', 'FIELD_UPDATE', 'ASSIGNED', 'UNASSIGNED', 'ASSIGNMENT_CHANGE', 'COMMENT', 'DELETED'],
       required: true,
     },
     field: {

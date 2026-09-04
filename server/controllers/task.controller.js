@@ -551,14 +551,31 @@ const deleteTask = async (req, res) => {
       return res.status(404).json({ error: 'Task not found.' });
     }
 
+    // Record DELETED activity log entry before deleting task document so audit trail is preserved
+    await ActivityLog.create({
+      task: task._id,
+      actor: req.user._id,
+      type: 'DELETED',
+      details: {
+        title: task.title,
+        taskKey: task.taskKey,
+        taskNum: task.taskNum,
+        project: task.project,
+        status: task.status,
+        priority: task.priority,
+      },
+      metadata: { deletedAt: new Date() },
+    });
+
     await Task.findByIdAndDelete(req.params.id);
 
-    // Clean up associated activity logs and blocking references
-    await ActivityLog.deleteMany({ task: req.params.id });
+    // Clean up blocking references in remaining tasks
     await Task.updateMany(
       { blockingTasks: req.params.id },
       { $pull: { blockingTasks: req.params.id } }
     );
+
+    // Note: ActivityLog history records are intentionally preserved permanently for audit trail integrity.
 
     return res.json({ message: 'Task deleted successfully.', taskId: req.params.id });
   } catch (err) {
